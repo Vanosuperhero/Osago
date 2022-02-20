@@ -3,7 +3,16 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/drawable-v24/calculator.xml" value="0.1" />
         <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/drawable-v24/check_mark.xml" value="0.1" />
+        <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.1" />
+        <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/drawable/calculator.xml" value="0.172" />
+        <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/drawable/check_mark.xml" value="0.172" />
+        <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/drawable/check_mark_flip.xml" value="0.1" />
+        <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/drawable/ic_launcher_background.xml" value="0.1" />
+        <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/drawable/ic_launcher_foreground.xml" value="0.1" />
+        <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/drawable/shape.xml" value="0.1" />
+        <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/drawable/tip.xml" value="0.1" />
         <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/font/dfs.xml" value="0.1" />
         <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/layout/activity_main.xml" value="0.1" />
         <entry key="..\:/AndStu/BeskorSravniOsago/app/src/main/res/layout/dsf.xml" value="0.1" />

@@ -37,7 +37,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import com.example.beskorsravniosago.collections.InputFieldData
 import com.example.beskorsravniosago.network.Coefficients
 import com.example.beskorsravniosago.network.coefficients
 import com.example.beskorsravniosago.viewmodels.FirstScreenViewModel
@@ -69,7 +68,7 @@ class FirstScreen : Fragment() {
         scope: CoroutineScope,
         modalBottomSheetState: BottomSheetScaffoldState
     ) {
-        if (modalBottomSheetState.bottomSheetState.isCollapsed) {
+        if (modalBottomSheetState.bottomSheetState.isCollapsed){
             viewModel.getDataCoefficients()
         }
         Box {
@@ -358,12 +357,12 @@ class FirstScreen : Fragment() {
                 .background(MaterialTheme.colors.primaryVariant)
         ) {
             Column(modifier = Modifier.padding(vertical = 11.dp)) {
-                InputField(viewModel.field1, scope, modalBottomSheetState)
-                InputField(viewModel.field2, scope, modalBottomSheetState)
-                InputField(viewModel.field3, scope, modalBottomSheetState)
-                InputField(viewModel.field4, scope, modalBottomSheetState)
-                InputField(viewModel.field5, scope, modalBottomSheetState)
-                InputField(viewModel.field6, scope, modalBottomSheetState)
+                InputField(0, scope, modalBottomSheetState)
+                InputField(1, scope, modalBottomSheetState)
+                InputField(2, scope, modalBottomSheetState)
+                InputField(3, scope, modalBottomSheetState)
+                InputField(4, scope, modalBottomSheetState)
+                InputField(5, scope, modalBottomSheetState)
             }
         }
     }
@@ -371,7 +370,7 @@ class FirstScreen : Fragment() {
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
     fun InputField(
-        input: InputFieldData,
+        field: Int,
         scope: CoroutineScope,
         modalBottomSheetState:  BottomSheetScaffoldState,
         ) {
@@ -383,7 +382,7 @@ class FirstScreen : Fragment() {
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colors.onSecondary)
                 .clickable {
-                    viewModel.setDataToSheet(input)
+                    viewModel.setDataToSheet(field)
                     scope.launch {
                         modalBottomSheetState.bottomSheetState.expand()
                     }
@@ -394,8 +393,8 @@ class FirstScreen : Fragment() {
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 6.dp)
                     .align(alignment = Alignment.CenterStart),
-                text = input.livedata.value.ifBlank {
-                    stringResource(input.title)
+                text = viewModel.fieldList[field].livedata.value.ifBlank {
+                    stringResource(viewModel.fieldList[field].title)
                 },
                 fontSize = 16.sp,
                 fontFamily = MyFontsFamily,
@@ -408,6 +407,7 @@ class FirstScreen : Fragment() {
     @Composable
     fun BottomSheetContent() {
         Box(Modifier.background(MaterialTheme.colors.onSecondary)) {
+            val field = viewModel.field.value
             Column(modifier = Modifier
                 .fillMaxWidth()
             ) {
@@ -422,7 +422,7 @@ class FirstScreen : Fragment() {
                 }
                 Text(
                     fontSize = 20.sp,
-                    text = stringResource(viewModel.field.value.title),
+                    text = stringResource(viewModel.fieldList[field].title),
                     fontFamily = MyFontsFamily,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colors.onBackground,
@@ -432,16 +432,16 @@ class FirstScreen : Fragment() {
                 )
                 val focusManager = LocalFocusManager.current
                 OutlinedTextField(
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = viewModel.field.value.keyboardType),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = viewModel.fieldList[field].keyboardType),
                     keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    value = viewModel.field.value.livedata.value,
-                    onValueChange = {viewModel.field.value.setFun(it)},
+                    value = viewModel.fieldList[field].livedata.value,
+                    onValueChange = {viewModel.fieldList[field].setFun(it)},
                     shape = RoundedCornerShape(12.dp),
                     colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colors.onBackground),
-                    placeholder = { Text(text = stringResource(viewModel.field.value.placeholder), color = MaterialTheme.colors.surface) },
+                    placeholder = { Text(text = stringResource(viewModel.fieldList[field].placeholder), color = MaterialTheme.colors.surface) },
                 )
                 Spacer(modifier = Modifier.padding(vertical = 80.dp))
                 Box(modifier = Modifier
@@ -451,26 +451,39 @@ class FirstScreen : Fragment() {
                         .align(Alignment.BottomEnd)
                         .padding(end = 16.dp)
                         .clip(RoundedCornerShape(18.dp)),
-                        onClick = { viewModel.getDataCoefficients() }
+                        onClick = {
+                            if (field != 5) {
+                                viewModel.setDataToSheet(field + 1)
+                                viewModel.getDataCoefficients()
+                            } else{
+                                /*TODO*/
+                            }
+                        }
                     ) {
                             Text(
                                 modifier = Modifier
                                     .padding(top = 10.dp, bottom = 10.dp, start = 7.dp),
-                                text = stringResource(R.string.next),
+                                text = if (field != 5) {
+                                    stringResource(R.string.next)
+                                } else{
+                                    stringResource(R.string.confirm)
+                                },
                                 fontSize = 16.sp,
                                 fontFamily = MyFontsFamily,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colors.primaryVariant,
                             )
-                            Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-                            Icon(
-                                painter = painterResource(R.drawable.shape),
-                                contentDescription = stringResource(R.string.arrow),
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .padding(top = 2.dp),
-                                tint = MaterialTheme.colors.primaryVariant
-                            )
+                            if (field != 5) {
+                                Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                                Icon(
+                                    painter = painterResource(R.drawable.shape),
+                                    contentDescription = stringResource(R.string.arrow),
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .padding(top = 2.dp),
+                                    tint = MaterialTheme.colors.primaryVariant
+                                )
+                            }
                             Spacer(modifier = Modifier.padding(horizontal = 2.dp))
                         }
                 }
@@ -482,9 +495,7 @@ class FirstScreen : Fragment() {
     @ExperimentalMaterialApi
     @Composable
     fun HomeScreen() {
-        val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
-            bottomSheetState = BottomSheetState(BottomSheetValue.Collapsed)
-        )
+        val bottomSheetScaffoldState = viewModel.bottomSheetScaffoldState
         val scope = rememberCoroutineScope()
         BottomSheetScaffold(
             scaffoldState = bottomSheetScaffoldState,

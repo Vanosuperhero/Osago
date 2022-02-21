@@ -1,5 +1,6 @@
 package com.example.beskorsravniosago.viewmodels
 
+import androidx.compose.material.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.beskorsravniosago.R
@@ -42,15 +43,17 @@ class FirstScreenViewModel : ViewModel() {
     private val _input6 = mutableStateOf("")
     private var input6: MutableState<String> = _input6
 
-    var field1 = InputFieldData(input1,::setInput1,R.string.first_field,R.string.first_placeholder,KeyboardType.Text)
-    var field2 = InputFieldData(input2,::setInput2,R.string.second_field,R.string.second_placeholder,KeyboardType.Number)
-    var field3 = InputFieldData(input3,::setInput3,R.string.third_field,R.string.third_placeholder,KeyboardType.Number)
-    var field4 = InputFieldData(input4,::setInput4,R.string.fourth_field,R.string.fourth_placeholder,KeyboardType.Number)
-    var field5 = InputFieldData(input5,::setInput5,R.string.fifth_field,R.string.fifth_placeholder,KeyboardType.Number)
-    var field6 = InputFieldData(input6,::setInput6,R.string.sixth_field,R.string.sixth_placeholder,KeyboardType.Number)
+    private var field1 = InputFieldData(input1,::setInput1,R.string.first_field,R.string.first_placeholder,KeyboardType.Text)
+    private var field2 = InputFieldData(input2,::setInput2,R.string.second_field,R.string.second_placeholder,KeyboardType.Number)
+    private var field3 = InputFieldData(input3,::setInput3,R.string.third_field,R.string.third_placeholder,KeyboardType.Number)
+    private var field4 = InputFieldData(input4,::setInput4,R.string.fourth_field,R.string.fourth_placeholder,KeyboardType.Number)
+    private var field5 = InputFieldData(input5,::setInput5,R.string.fifth_field,R.string.fifth_placeholder,KeyboardType.Number)
+    private var field6 = InputFieldData(input6,::setInput6,R.string.sixth_field,R.string.sixth_placeholder,KeyboardType.Number)
 
-    private val _field = mutableStateOf(field1)
-    var field: MutableState<InputFieldData> = _field
+    val fieldList = listOf(field1, field2, field3, field4, field5, field6)
+
+    private val _field = mutableStateOf(0)
+    var field: MutableState<Int> = _field
 
     private fun setInput1(input: String) {
         viewModelScope.launch {
@@ -82,7 +85,7 @@ class FirstScreenViewModel : ViewModel() {
             _input6.value = input
         }
     }
-    fun setDataToSheet(field: InputFieldData) {
+    fun setDataToSheet(field: Int) {
         viewModelScope.launch {
             _field.value = field
         }
@@ -103,9 +106,16 @@ class FirstScreenViewModel : ViewModel() {
                 }catch (e:Exception) {
                 }
             }
-            i++
         }
+        i++
     }
 
+
+    @OptIn(ExperimentalMaterialApi::class)
+    val bottomSheetScaffoldState = BottomSheetScaffoldState(
+        bottomSheetState = BottomSheetState(BottomSheetValue.Collapsed),
+        drawerState = DrawerState(DrawerValue.Closed),
+        snackbarHostState =  SnackbarHostState()
+    )
 }
 

@@ -6,8 +6,8 @@ import androidx.compose.ui.text.input.KeyboardType
 
 data class InputFieldData(
     var livedata: MutableState<String>,
-    var setFun: (String) -> Unit,
     val title: Int,
+    val titleAfter: Int,
     var placeholder: Int,
     var keyboardType: KeyboardType
     )

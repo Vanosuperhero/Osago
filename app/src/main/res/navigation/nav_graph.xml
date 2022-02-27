@@ -8,5 +8,16 @@
         android:name="com.example.beskorsravniosago.fragments.FirstScreen"
         android:label="FirstScreen">
 
+        <action
+            android:id="@+id/action_firstScreen_to_secondScreen"
+            app:destination="@id/secondScreen" />
+    </fragment>
+    <fragment
+        android:id="@+id/secondScreen"
+        android:name="com.example.beskorsravniosago.fragments.SecondScreen"
+        android:label="SecondScreen" >
+        <action
+            android:id="@+id/action_secondScreen_to_firstScreen"
+            app:destination="@id/firstScreen" />
     </fragment>
 </navigation>

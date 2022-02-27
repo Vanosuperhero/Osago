@@ -1,9 +1,12 @@
 <resources>
     <string name="app_name">BeskorSravniOsago</string>
-    <string name="main_title">Калькулятор ОСАГО</string>
-    <string name="calc_button">Рассчитать ОСАГО</string>
+    <string name="first_title">Калькулятор ОСАГО</string>
+    <string name="second_title">Расчёт цены полиса</string>
+    <string name="calc_button_first">Рассчитать ОСАГО</string>
+    <string name="calc_button_second">Рассчитать точную цену и купить</string>
     <string name="check_mark">Стрелка вниз</string>
     <string name="calculator">Значок калькулятора</string>
+    <string name="icon">Иконка</string>
     <string name="coefs">Ваши коэффициенты</string>
     <string name="next">Далее</string>
     <string name="confirm">Подтвердить</string>
@@ -11,21 +14,18 @@
     <string name="null_error">null_error</string>
     <string name="arrow">Стрелка</string>
     <string name="tip">Палочка</string>
-
+    <string name="star">Звездочка</string>
+    <string name="first_field_after">Город регистрации собственника</string>
     <string name="first_field">Город регистрации"\n"собственника</string>
     <string name="second_field">Мощность автомобиля</string>
     <string name="third_field">Сколько водителей</string>
     <string name="fourth_field">Возраст младшего из водителей</string>
     <string name="fifth_field">Минимальный стаж водителей</string>
     <string name="sixth_field">Сколько лет не было аварий</string>
-
     <string name="first_placeholder">Введите город</string>
     <string name="second_placeholder">Введите мощность</string>
     <string name="third_placeholder">Введите количество водителей</string>
     <string name="fourth_placeholder">Введите возраст</string>
     <string name="fifth_placeholder">Введите стаж</string>
     <string name="sixth_placeholder">Введите количество лет</string>
-
-
-
 </resources>

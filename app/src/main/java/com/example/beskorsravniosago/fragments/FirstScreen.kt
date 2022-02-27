@@ -1,301 +1,313 @@
-package com.example.sravniru_android.fragments
+package com.example.beskorsravniosago.fragments
 
-import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.material.ButtonDefaults.buttonColors
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.createBitmap
 import androidx.fragment.app.viewModels
-import androidx.navigation.NavController
-import androidx.navigation.fragment.findNavController
-import com.example.beskorsravniosago.fragments.FirstScreenViewModel
-//import androidx.compose.runtime.livedata.observeAsState
 import com.example.beskorsravniosago.R
 import com.example.beskorsravniosago.ui.theme.*
-import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.Text
-import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.navigation.fragment.findNavController
+import com.example.beskorsravniosago.collections.coefficients
+import com.example.beskorsravniosago.network.Factor
+import com.example.beskorsravniosago.viewmodels.FirstScreenViewModel
+import com.google.accompanist.insets.ProvideWindowInsets
+import kotlinx.coroutines.launch
 
 
 class FirstScreen : Fragment() {
 
     private val viewModel: FirstScreenViewModel by viewModels()
 
+    @OptIn(ExperimentalMaterialApi::class)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                FinalScreen(viewModel)
+                BeskorSravniOsagoTheme{
+                    ProvideWindowInsets(windowInsetsAnimationsEnabled = true) {
+                        HomeScreen()
+                    }
+                }
             }
         }
     }
 
+    @OptIn(ExperimentalMaterialApi::class)
     @Composable
-    fun FinalScreen(viewModel: FirstScreenViewModel) {
+    fun FinalScreen(
+        viewModel: FirstScreenViewModel,
+        content: @Composable () -> Unit,
+        title: @Composable () -> Unit,
+        background: Color,
+        textColor: Color,
+        text: Int
+    ) {
+        if (viewModel.bottomSheetScaffoldState.bottomSheetState.isCollapsed){
+            viewModel.getDataCoefficients()
+        }
         Box {
             Box(modifier = Modifier.align(Alignment.TopCenter)) {
-                Screen(viewModel)
+                Screen(viewModel,{ content() },{ title() })
             }
             Box(modifier = Modifier.align(Alignment.BottomCenter)) {
-                Calculation()
+                Calculation(background, textColor, text, viewModel)
             }
         }
     }
 
-
     @Composable
-    fun Screen(viewModel: FirstScreenViewModel) {
+    fun Screen(
+        viewModel: FirstScreenViewModel,
+        content: @Composable () -> Unit,
+        title: @Composable () -> Unit
+    ) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = 100.dp)
-                .background(Accent_Blue_06),
+                .background(MaterialTheme.colors.onSecondary),
         ) {
             item {
-                Text(
-                    fontSize = 28.sp,
-                    text = "Калькулятор ОСАГО",
-                    fontFamily = MyFontsFamily,
-                    fontWeight = FontWeight.Bold,
-                    color = almostBlack,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                )
+                title()
             }
             item {
                 CardCalc(viewModel)
             }
             item {
-                InputFieldsCard()
+                content()
             }
         }
     }
 
+    @Composable
+    fun FirstTitle() {
+        Text(
+            fontSize = 28.sp,
+            text = stringResource(R.string.first_title),
+            fontFamily = MyFontsFamily,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colors.onBackground,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        )
+    }
 
     @Composable
-    fun CardCalc(viewModel: FirstScreenViewModel) {
-        Card(
+    fun CardCalc(
+        viewModel: FirstScreenViewModel
+    ) {
+        val coefficients = viewModel.liveCoefficients.value.factors
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color.White)
+                .background(MaterialTheme.colors.primaryVariant)
         ) {
-//        Без ViewModel:
-//        var expanded by remember { mutableStateOf(false) }
-//        Column(Modifier.clickable { expanded = !expanded }) {
-
-            val expanded: State<Boolean?> = viewModel.expanded.observeAsState()
-            Column(Modifier.clickable { viewModel.refresh()}) {
-                Row() {
+            val expanded by remember { viewModel.expanded }
+            Column(
+                Modifier
+                    .clickable { viewModel.refresh() }
+                    .background(MaterialTheme.colors.primaryVariant)
+            ) {
+                Row {
                     Box(
                         modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 16.dp)
+                            .padding(top = 16.dp, bottom = 16.dp, start = 16.dp, end = 12.dp)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(Main_Main_06)
+                            .background(MaterialTheme.colors.onSecondary)
                             .size(width = 36.dp, height = 36.dp),
-
-                        ) {
+                    ) {
                         Image(
                             modifier = Modifier
                                 .size(15.dp)
                                 .align(alignment = Alignment.Center),
                             painter = painterResource(R.drawable.calculator),
-                            contentDescription = "Значок калькулятора"
+                            contentDescription = stringResource(R.string.calculator),
                         )
                     }
-                    Column() {
+                    Column {
                         Text(
-                            text = "Ваши коэффициенты",
+                            text = stringResource(R.string.coefs),
                             fontSize = 12.sp,
                             fontFamily = MyFontsFamily,
                             fontWeight = FontWeight.Normal,
-                            color = Main_Main_30,
+                            color = MaterialTheme.colors.surface,
                             modifier = Modifier
                                 .padding(top = 16.dp)
                         )
-                        Row() {
+                        Row {
                             Text(
-                                text = "БТ",
+                                text = coefficients[0].headerValue,
                                 fontSize = 16.sp,
                                 fontFamily = MyFontsFamily,
                                 fontWeight = FontWeight.Medium,
-                                color = Accent_Blue_100
+                                color = MaterialTheme.colors.primary
                             )
-//                        Найти SF PRO TEXT
-                            Text(text = "x", fontSize = 15.sp, color = Main_Main_30)
                             Text(
-                                text = "КМ",
-                                fontSize = 16.sp,
-                                fontFamily = MyFontsFamily,
-                                fontWeight = FontWeight.Medium,
-                                color = Accent_Blue_100
+                                text = stringResource(R.string.x),
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colors.surface
                             )
-                            Text(text = "x", fontSize = 15.sp, color = Main_Main_30)
                             Text(
-                                text = "КТ",
+                                text = coefficients[1].headerValue,
                                 fontSize = 16.sp,
                                 fontFamily = MyFontsFamily,
                                 fontWeight = FontWeight.Medium,
-                                color = Accent_Blue_100
+                                color = MaterialTheme.colors.primary
                             )
-                            Text(text = "x", fontSize = 15.sp, color = Main_Main_30)
                             Text(
-                                text = "КБМ",
-                                fontSize = 16.sp,
-                                fontFamily = MyFontsFamily,
-                                fontWeight = FontWeight.Medium,
-                                color = Accent_Blue_100
+                                text = stringResource(R.string.x),
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colors.surface
                             )
-                            Text(text = "x", fontSize = 15.sp, color = Main_Main_30)
                             Text(
-                                text = "КО",
+                                text = coefficients[2].headerValue,
                                 fontSize = 16.sp,
                                 fontFamily = MyFontsFamily,
                                 fontWeight = FontWeight.Medium,
-                                color = Accent_Blue_100
+                                color = MaterialTheme.colors.primary
                             )
-                            Text(text = "x", fontSize = 15.sp, color = Main_Main_30)
                             Text(
-                                text = "КВС",
+                                text = stringResource(R.string.x),
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colors.surface
+                            )
+                            Text(
+                                text = coefficients[3].headerValue,
                                 fontSize = 16.sp,
                                 fontFamily = MyFontsFamily,
                                 fontWeight = FontWeight.Medium,
-                                color = Accent_Blue_100
+                                color = MaterialTheme.colors.primary
+                            )
+                            Text(
+                                text = stringResource(R.string.x),
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colors.surface
+                            )
+                            Text(
+                                text = coefficients[5].headerValue,
+                                fontSize = 16.sp,
+                                fontFamily = MyFontsFamily,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colors.primary
+                            )
+                            Text(
+                                text = stringResource(R.string.x),
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colors.surface
+                            )
+                            Text(
+                                text = coefficients[4].headerValue,
+                                fontSize = 16.sp,
+                                fontFamily = MyFontsFamily,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colors.primary
                             )
                         }
                     }
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
                         Image(
                             modifier = Modifier
                                 .align(alignment = Alignment.CenterEnd)
                                 .padding(top = 29.dp, end = 20.dp, bottom = 29.dp)
                                 .size(width = 16.dp, height = 10.dp),
-                            painter = painterResource(R.drawable.check_mark),
-                            contentDescription = "Стрелка вниз"
+                            painter = if (expanded) {
+                                painterResource(R.drawable.check_mark_flip)
+                            } else {
+                                painterResource(R.drawable.check_mark)
+                            },
+                            contentDescription = stringResource(R.string.check_mark)
                         )
                     }
                 }
-                AnimatedVisibility(expanded.value!!) {
-                    CoefficientCollumn()
+                AnimatedVisibility(expanded) {
+                    CoefficientColumn(coefficients)
                 }
             }
         }
     }
 
-
     @Composable
-    fun CoefficientCollumn() {
+    fun CoefficientColumn(factors: List<Factor>) {
         Column {
-            Coefficient(
-                "БТ",
-                "базовый тариф",
-                "Устанавливает страховая" + "\n" + "компания",
-                "2 754 - 4 432"
-            )
-            Coefficient(
-                "КМ",
-                "коэфф. мощности",
-                "Чем мощнее автомобиль," + "\n" + "тем дороже страховой полис",
-                "0,6 - 1,6"
-            )
-            Coefficient(
-                "КТ",
-                "территориальный коэфф.",
-                "Определяется по прописке" + "\n" + "собственника автомобиля",
-                "0,64 - 1,99"
-            )
-            Coefficient(
-                "КБМ",
-                "коэфф. безаварийности",
-                "Учитывается только самый" + "\n" + " высокий коэффициент из всех" + "\n" + "водителей",
-                "0,5 - 2,45"
-            )
-            Coefficient(
-                "КВС",
-                "коэфф. возраст/стаж",
-                "Чем больше возраст и стаж" + "\n" + "у вписанного в полис водителя," + "\n" + "тем дешевле будет полис",
-                "0,90 - 1,93"
-            )
-            Coefficient(
-                "КО",
-                "коэфф. ограничений",
-                "Полис с ограниченным списком" + "\n" + "водителей будет стоить дешевле",
-                "1 или 1,99"
-            )
+            Coefficient(factors[0], coefficients.factors[0])
+            Coefficient(factors[1], coefficients.factors[1])
+            Coefficient(factors[2], coefficients.factors[2])
+            Coefficient(factors[3], coefficients.factors[3])
+            Coefficient(factors[4], coefficients.factors[4])
+            Coefficient(factors[5], coefficients.factors[5])
         }
     }
 
     @Composable
-    fun Coefficient(coef: String, name: String, describ: String, calc: String) {
+    fun Coefficient(coefficient: Factor, forDetailText: Factor) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 3.dp, bottom = 16.dp, start = 16.dp, end = 16.dp)
         ) {
             Column {
-                Row() {
+                Row {
                     Text(
-                        text = coef,
+                        text = coefficient.title,
                         fontSize = 16.sp,
                         fontFamily = MyFontsFamily,
                         fontWeight = FontWeight.Medium,
-                        color = Main_Main_100
+                        color = MaterialTheme.colors.secondary
                     )
                     Text(
                         modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
                             .padding(start = 4.dp),
-                        text = "($name)",
+                        text = "(${coefficient.name})",
                         fontSize = 12.sp,
                         fontFamily = MyFontsFamily,
                         fontWeight = FontWeight.Normal,
-                        color = Main_Main_30
+                        color = MaterialTheme.colors.surface
                     )
                 }
                 Text(
-                    text = describ,
-                    fontSize = 12.sp,
-                    fontFamily = MyFontsFamily,
-                    fontWeight = FontWeight.Normal,
-                    color = Main_Main_60
+                text = forDetailText.detailText,
+                fontSize = 12.sp,
+                fontFamily = MyFontsFamily,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colors.background
                 )
             }
             Box(
@@ -306,11 +318,11 @@ class FirstScreen : Fragment() {
                 Text(
                     modifier = Modifier
                         .align(alignment = Alignment.CenterEnd),
-                    text = calc,
+                    text = coefficient.value,
                     fontSize = 16.sp,
                     fontFamily = MyFontsFamily,
                     fontWeight = FontWeight.Medium,
-                    color = Main_Main_100
+                    color = MaterialTheme.colors.secondary
                 )
 
             }
@@ -318,83 +330,291 @@ class FirstScreen : Fragment() {
     }
 
     @Composable
-    fun InputField(text: String) {
+    fun Calculation(
+        background: Color,
+        textColor: Color,
+        text: Int,
+        viewModel: FirstScreenViewModel
+    ) {
+        var button by remember {mutableStateOf(false)}
+        button = viewModel.fieldList[0].livedata.value.isNotBlank() &&
+                viewModel.fieldList[1].livedata.value.isNotBlank() &&
+                viewModel.fieldList[2].livedata.value.isNotBlank() &&
+                viewModel.fieldList[3].livedata.value.isNotBlank() &&
+                viewModel.fieldList[4].livedata.value.isNotBlank() &&
+                viewModel.fieldList[5].livedata.value.isNotBlank()
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .background(MaterialTheme.colors.primaryVariant)
+        ) {
+            Button(
+                enabled = button,
+                onClick = { findNavController().navigate(R.id.action_firstScreen_to_secondScreen) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primary, disabledBackgroundColor = background, contentColor = MaterialTheme.colors.primaryVariant, disabledContentColor = textColor)
+            )
+            {
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    text = stringResource(text),
+                    fontSize = 16.sp,
+                    fontFamily = MyFontsFamily,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+
+    @Composable
+    fun InputFieldsCard() {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colors.primaryVariant)
+        ) {
+            Column(modifier = Modifier.padding(vertical = 11.dp)) {
+                Input(0)
+                Input(1)
+                Input(2)
+                Input(3)
+                Input(4)
+                Input(5)
+            }
+        }
+    }
+
+    @Composable
+    fun Input(
+        field: Int
+    ) {
+        if (viewModel.fieldList[field].livedata.value.isBlank()) {
+            InputField(field)
+        }else{
+            AfterInputField(field)
+        }
+    }
+
+    @OptIn(ExperimentalMaterialApi::class)
+    @Composable
+    fun InputField(
+        field: Int
+        ) {
+        val scope = rememberCoroutineScope()
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(70.dp)
                 .padding(horizontal = 16.dp, vertical = 6.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(Main_Main_06)
-                .clickable { println("Hello") }
+                .background(MaterialTheme.colors.onSecondary)
+                .clickable {
+                    viewModel.setDataToSheet(field)
+                    scope.launch {
+                        viewModel.expand()
+                    }
+                }
         )
         {
             Text(
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 6.dp)
                     .align(alignment = Alignment.CenterStart),
-                text = text,
+                text = stringResource(viewModel.fieldList[field].title),
                 fontSize = 16.sp,
                 fontFamily = MyFontsFamily,
                 fontWeight = FontWeight.Normal,
-                color = Main_Main_60
+                color = MaterialTheme.colors.background
             )
         }
-
     }
 
+    @OptIn(ExperimentalMaterialApi::class)
     @Composable
-    fun InputFieldsCard() {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color.White)
-        ) {
-            Column(modifier = Modifier.padding(vertical = 11.dp)) {
-                InputField(text = "Город регистрации" + "\n" + "собственника")
-                InputField(text = "Мощность автомобиля")
-                InputField(text = "Сколько водителей")
-                InputField(text = "Возраст младшего из водителей")
-                InputField(text = "Минимальный стаж водителей")
-                InputField(text = "Сколько лет не было аварий")
-            }
-        }
-    }
-
-
-    @Composable
-    fun Calculation() {
+    fun AfterInputField(
+        field: Int
+    ) {
+        val scope = rememberCoroutineScope()
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp)
-                .background(Color.White)
-        ) {
-            Box(
+                .height(70.dp)
+                .padding(horizontal = 16.dp, vertical = 6.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colors.onSecondary)
+                .clickable {
+                    viewModel.setDataToSheet(field)
+                    scope.launch {
+                        viewModel.expand()
+                    }
+                }
+        )
+        {
+            Column {
+            Text(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(90.dp)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Main_Main_06)
-                    .clickable { println("Hello") }
+                    .padding(start = 16.dp, end = 16.dp, top = 9.dp, bottom = 1.dp)
+                    .align(alignment = Alignment.Start),
+                text = stringResource(viewModel.fieldList[field].titleAfter),
+                fontSize = 12.sp,
+                fontFamily = MyFontsFamily,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colors.background
             )
-            {
-                Text(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .align(alignment = Alignment.Center),
-                    text = "Рассчитать ОСАГО",
-                    fontSize = 16.sp,
-                    fontFamily = MyFontsFamily,
-                    fontWeight = FontWeight.Normal,
-                    color = Main_Main_60
-                )
-            }
+            Text(
+                modifier = Modifier
+                    .padding(start = 16.dp, end = 16.dp, bottom = 6.dp)
+                    .align(alignment = Alignment.Start),
+                text = viewModel.fieldList[field].livedata.value,
+                fontSize = 16.sp,
+                fontFamily = MyFontsFamily,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colors.secondary
+            )
+        }
         }
     }
 
 
+    @Composable
+    fun BottomSheetContent() {
+        val scope = rememberCoroutineScope()
+        Box(Modifier
+            .background(MaterialTheme.colors.primaryVariant)
+        ) {
+            val field = viewModel.field.value
+            Column(modifier = Modifier
+                .fillMaxWidth()
+            ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Image(
+                        modifier = Modifier
+                            .align(alignment = Alignment.TopCenter)
+                            .padding(top = 8.dp),
+                        painter = painterResource(R.drawable.tip),
+                        contentDescription = stringResource(R.string.tip)
+                    )
+                }
+                Text(
+                    fontSize = 20.sp,
+                    text = stringResource(viewModel.fieldList[field].title),
+                    fontFamily = MyFontsFamily,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colors.onBackground,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 24.dp),
+                )
+                val focusManager = LocalFocusManager.current
+                OutlinedTextField(
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = viewModel.fieldList[field].keyboardType),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    value = viewModel.fieldList[field].livedata.value,
+                    onValueChange = {viewModel.setInput(it)},
+                    shape = RoundedCornerShape(12.dp),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colors.onBackground),
+                    placeholder = { Text(text = stringResource(viewModel.fieldList[field].placeholder), color = MaterialTheme.colors.surface) },
+                )
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 100.dp)
+                ){
+                    Button(modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 16.dp)
+                        .clip(RoundedCornerShape(18.dp)),
+                        onClick = {
+                            scope.launch {
+                                viewModel.next()
+                            }
+                        }
+                    ) {
+                            Text(
+                                modifier = Modifier
+                                    .padding(top = 10.dp, bottom = 10.dp, start = 7.dp),
+                                text = if (field != 5) {
+                                    stringResource(R.string.next)
+                                } else{
+                                    stringResource(R.string.confirm)
+                                },
+                                fontSize = 16.sp,
+                                fontFamily = MyFontsFamily,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colors.primaryVariant,
+                            )
+                            if (field != 5) {
+                                Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                                Icon(
+                                    painter = painterResource(R.drawable.shape),
+                                    contentDescription = stringResource(R.string.arrow),
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .padding(top = 2.dp),
+                                    tint = MaterialTheme.colors.primaryVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.padding(horizontal = 2.dp))
+                        }
+                    if (field != 0) {
+                        Button(modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .padding(start = 16.dp)
+                            .size(59.dp),
+                            elevation = ButtonDefaults.elevation(
+                                defaultElevation = 0.dp,
+                                pressedElevation = 0.dp,
+                                disabledElevation = 0.dp
+                            ),
+                            border = BorderStroke(1.dp, MaterialTheme.colors.onSecondary),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primaryVariant),
+                            onClick = { viewModel.back() },
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.shape_flip),
+                                contentDescription = stringResource(R.string.arrow),
+                                modifier = Modifier
+                                    .size(14.dp),
+                                tint = MaterialTheme.colors.primary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @ExperimentalMaterialApi
+    @Composable
+    fun HomeScreen() {
+        BottomSheetScaffold(
+            scaffoldState = viewModel.bottomSheetScaffoldState,
+            sheetContent = {
+                BottomSheetContent()
+            },
+            sheetPeekHeight = 0.dp,
+            sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            sheetBackgroundColor = Color.White
+        ) {
+            FinalScreen(
+                viewModel,
+                { InputFieldsCard() },
+                { FirstTitle() },
+                MaterialTheme.colors.onSecondary,
+                MaterialTheme.colors.onPrimary,
+                R.string.calc_button_first
+            )
+        }
+    }
 }

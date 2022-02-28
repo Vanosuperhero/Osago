@@ -35,7 +35,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.navigation.fragment.findNavController
@@ -172,73 +176,22 @@ class FirstScreen : Fragment() {
                                 .padding(top = 16.dp)
                         )
                         Row {
-                            Text(
-                                text = coefficients[0].headerValue,
-                                fontSize = 16.sp,
-                                fontFamily = MyFontsFamily,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colors.primary
-                            )
-                            Text(
-                                text = stringResource(R.string.x),
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colors.surface
-                            )
-                            Text(
-                                text = coefficients[1].headerValue,
-                                fontSize = 16.sp,
-                                fontFamily = MyFontsFamily,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colors.primary
-                            )
-                            Text(
-                                text = stringResource(R.string.x),
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colors.surface
-                            )
-                            Text(
-                                text = coefficients[2].headerValue,
-                                fontSize = 16.sp,
-                                fontFamily = MyFontsFamily,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colors.primary
-                            )
-                            Text(
-                                text = stringResource(R.string.x),
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colors.surface
-                            )
-                            Text(
-                                text = coefficients[3].headerValue,
-                                fontSize = 16.sp,
-                                fontFamily = MyFontsFamily,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colors.primary
-                            )
-                            Text(
-                                text = stringResource(R.string.x),
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colors.surface
-                            )
-                            Text(
-                                text = coefficients[5].headerValue,
-                                fontSize = 16.sp,
-                                fontFamily = MyFontsFamily,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colors.primary
-                            )
-                            Text(
-                                text = stringResource(R.string.x),
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colors.surface
-                            )
-                            Text(
-                                text = coefficients[4].headerValue,
-                                fontSize = 16.sp,
-                                fontFamily = MyFontsFamily,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colors.primary
-                            )
+                            for (i in 0..5){
+                                Text(
+                                    text = coefficients[i].headerValue,
+                                    fontSize = 16.sp,
+                                    fontFamily = MyFontsFamily,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colors.primary
+                                )
+                                if (i != 5){
+                                    Text(
+                                        text = stringResource(R.string.x),
+                                        fontSize = 15.sp,
+                                        color = MaterialTheme.colors.surface
+                                    )
+                                }
+                            }
                         }
                     }
                     Box(modifier = Modifier.fillMaxWidth()) {
@@ -266,12 +219,9 @@ class FirstScreen : Fragment() {
     @Composable
     fun CoefficientColumn(factors: List<Factor>) {
         Column {
-            Coefficient(factors[0], coefficients.factors[0])
-            Coefficient(factors[1], coefficients.factors[1])
-            Coefficient(factors[2], coefficients.factors[2])
-            Coefficient(factors[3], coefficients.factors[3])
-            Coefficient(factors[4], coefficients.factors[4])
-            Coefficient(factors[5], coefficients.factors[5])
+            for (i in 0..5){
+                Coefficient(factors[i], coefficients.factors[i])
+            }
         }
     }
 
@@ -337,12 +287,7 @@ class FirstScreen : Fragment() {
         viewModel: FirstScreenViewModel
     ) {
         var button by remember {mutableStateOf(false)}
-        button = viewModel.fieldList[0].livedata.value.isNotBlank() &&
-                viewModel.fieldList[1].livedata.value.isNotBlank() &&
-                viewModel.fieldList[2].livedata.value.isNotBlank() &&
-                viewModel.fieldList[3].livedata.value.isNotBlank() &&
-                viewModel.fieldList[4].livedata.value.isNotBlank() &&
-                viewModel.fieldList[5].livedata.value.isNotBlank()
+        button = viewModel.fieldList.all { it.livedata.value.isNotBlank() }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -382,12 +327,9 @@ class FirstScreen : Fragment() {
                 .background(MaterialTheme.colors.primaryVariant)
         ) {
             Column(modifier = Modifier.padding(vertical = 11.dp)) {
-                Input(0)
-                Input(1)
-                Input(2)
-                Input(3)
-                Input(4)
-                Input(5)
+                for (i in 0..5){
+                    Input(i)
+                }
             }
         }
     }
@@ -403,12 +345,13 @@ class FirstScreen : Fragment() {
         }
     }
 
-    @OptIn(ExperimentalMaterialApi::class)
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun InputField(
         field: Int
         ) {
         val scope = rememberCoroutineScope()
+        val keyboardController = LocalSoftwareKeyboardController.current
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -418,6 +361,7 @@ class FirstScreen : Fragment() {
                 .background(MaterialTheme.colors.onSecondary)
                 .clickable {
                     viewModel.setDataToSheet(field)
+                    keyboardController?.show()
                     scope.launch {
                         viewModel.expand()
                     }
@@ -484,6 +428,7 @@ class FirstScreen : Fragment() {
     }
 
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun BottomSheetContent() {
         val scope = rememberCoroutineScope()
@@ -514,12 +459,17 @@ class FirstScreen : Fragment() {
                         .padding(horizontal = 16.dp, vertical = 24.dp),
                 )
                 val focusManager = LocalFocusManager.current
+                val focusRequester = FocusRequester()
+                LaunchedEffect(viewModel.showKeyboard) {
+                    focusRequester.requestFocus()
+                }
                 OutlinedTextField(
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = viewModel.fieldList[field].keyboardType),
                     keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .focusRequester(focusRequester),
                     value = viewModel.fieldList[field].livedata.value,
                     onValueChange = {viewModel.setInput(it)},
                     shape = RoundedCornerShape(12.dp),
@@ -536,7 +486,7 @@ class FirstScreen : Fragment() {
                         .clip(RoundedCornerShape(18.dp)),
                         onClick = {
                             scope.launch {
-                                viewModel.next()
+                                viewModel.next(focusManager)
                             }
                         }
                     ) {

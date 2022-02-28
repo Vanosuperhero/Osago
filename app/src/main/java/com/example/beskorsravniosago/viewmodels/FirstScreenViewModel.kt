@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.beskorsravniosago.R
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.*
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.beskorsravniosago.collections.InputFieldData
 import com.example.beskorsravniosago.collections.coefficients
@@ -31,6 +32,9 @@ class FirstScreenViewModel : ViewModel() {
         }
     }
 
+    private val _showKeyboard = mutableStateOf(false)
+    var showKeyboard: MutableState<Boolean> = _showKeyboard
+
     private val _inputBase = mutableStateOf("")
     private var inputBase: MutableState<String> = _inputBase
 
@@ -48,6 +52,7 @@ class FirstScreenViewModel : ViewModel() {
 
     private val _inputLimit = mutableStateOf("")
     private var inputLimit: MutableState<String> = _inputLimit
+
 
     private var fieldBase = InputFieldData(inputBase,R.string.first_field,R.string.first_field_after,R.string.first_placeholder,KeyboardType.Text)
     private var fieldPower = InputFieldData(inputPower,R.string.second_field,R.string.second_field,R.string.second_placeholder,KeyboardType.Number)
@@ -131,11 +136,12 @@ class FirstScreenViewModel : ViewModel() {
         }
     }
 
-    suspend fun next() {
+    suspend fun next(focus:FocusManager) {
         getDataCoefficients()
         if (field.value < 5) {
             setDataToSheet(field.value + 1)
         } else{
+            focus.clearFocus()
             collapse()
         }
     }

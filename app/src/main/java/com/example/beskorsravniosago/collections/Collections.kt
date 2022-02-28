@@ -62,33 +62,6 @@ var offers = Offers(listOf(
     0.0,
     0,
         branding
-    ),
-    Offer(
-        "",
-        0.0,
-        0,
-        branding
-    ),
-    Offer(
-        "",
-        0.0,
-        0,
-        branding
-    ),Offer(
-        "",
-        0.0,
-        0,
-        branding
-    ),Offer(
-        "",
-        0.0,
-        0,
-        branding
-    ),Offer(
-        "",
-        0.0,
-        0,
-        branding
     )),
     "")
 

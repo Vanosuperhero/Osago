@@ -52,18 +52,20 @@ class SecondScreen : Fragment() {
                     ProvideWindowInsets(windowInsetsAnimationsEnabled = true) {
                         FirstScreen().FinalScreen(
                             viewModel,
-                            content = { if (viewModel.status.value == ApiStatus.DONE) { OfferList(viewModel,viewModel.liveOffers.value.offers) } else { BlankList() }},
+                            content = { if (viewModel.statusOffers.value == ApiStatus.DONE)
+                            {
+                                OfferList(viewModel,viewModel.liveOffers.value.offers)
+                            } else { BlankList() }},
                             title = { SecondTitle() },
-                            background = MaterialTheme.colors.primary,
-                            textColor = MaterialTheme.colors.primaryVariant,
-                            text = R.string.calc_button_second)
+                            onClick = {},
+                            text = R.string.calc_button_second,
+//                            button = true
+                        )
                     }
                 }
             }
         }
     }
-
-
 
     @Composable
     fun SecondTitle() {
@@ -78,7 +80,7 @@ class SecondScreen : Fragment() {
                     .padding(top = 2.dp)
                     .size(14.dp)
                     .clickable {
-                        findNavController().navigate(R.id.action_secondScreen_to_firstScreen)
+                        findNavController().navigate(R.id.firstScreen)
                     },
                 tint = MaterialTheme.colors.onBackground
             )

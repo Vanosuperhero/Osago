@@ -20,15 +20,27 @@ import retrofit2.await
 enum class ApiStatus{LOADING,ERROR,DONE}
 class FirstScreenViewModel : ViewModel() {
 
-    private val _status = mutableStateOf(ApiStatus.LOADING)
-    var status : MutableState<ApiStatus> = _status
+    private val _statusCoefficients = mutableStateOf(ApiStatus.LOADING)
+    var statusCoefficients : MutableState<ApiStatus> = _statusCoefficients
+
+    private val _statusOffers = mutableStateOf(ApiStatus.LOADING)
+    var statusOffers : MutableState<ApiStatus> = _statusOffers
 
     private val _expanded = mutableStateOf(false)
     var expanded: MutableState<Boolean> = _expanded
 
+    private val _sheetState = mutableStateOf(false)
+    var sheetState: MutableState<Boolean> = _sheetState
+
     fun refresh() {
         viewModelScope.launch {
             _expanded.value =! _expanded.value
+        }
+    }
+
+    fun refreshSheet() {
+        viewModelScope.launch {
+            _sheetState.value =! _sheetState.value
         }
     }
 
@@ -97,8 +109,10 @@ class FirstScreenViewModel : ViewModel() {
     fun setDataToSheet(field: Int) {
         viewModelScope.launch {
             _field.value = field
+            _showKeyboard.value =! _showKeyboard.value
         }
     }
+
 
     private val _liveCoefficients = mutableStateOf(coefficients)
     var liveCoefficients: MutableState<Factors> = _liveCoefficients
@@ -110,9 +124,12 @@ class FirstScreenViewModel : ViewModel() {
             val getDataDeferred = Api.retrofitApi.pushPost()
             if (i > 0) {
                 try {
+                    _statusCoefficients.value = ApiStatus.LOADING
                     val listResult = getDataDeferred.await()
                     _liveCoefficients.value = listResult
+                    _statusCoefficients.value = ApiStatus.DONE
                 }catch (e:Exception) {
+                    _statusCoefficients.value = ApiStatus.ERROR
                 }
             }
         }
@@ -126,28 +143,25 @@ class FirstScreenViewModel : ViewModel() {
         viewModelScope.launch {
             val getDataDeferred = ApiOffer.retrofitApi.pushPost()
             try {
-                _status.value = ApiStatus.LOADING
+                _statusOffers.value = ApiStatus.LOADING
                 val listResult = getDataDeferred.await()
                 _liveOffers.value = listResult
-                _status.value = ApiStatus.DONE
+                _statusOffers.value = ApiStatus.DONE
             }catch (e:Exception) {
-                _status.value = ApiStatus.ERROR
+                _statusOffers.value = ApiStatus.ERROR
             }
         }
     }
 
-    suspend fun next(focus:FocusManager) {
-        getDataCoefficients()
+    suspend fun next() {
         if (field.value < 5) {
             setDataToSheet(field.value + 1)
         } else{
-            focus.clearFocus()
             collapse()
         }
     }
 
     fun back() {
-        getDataCoefficients()
         if (field.value > 0) {
             setDataToSheet(field.value - 1)
         }

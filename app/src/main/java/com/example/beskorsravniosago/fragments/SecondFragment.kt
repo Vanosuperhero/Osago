@@ -59,7 +59,7 @@ class SecondScreen : Fragment() {
                             title = { SecondTitle() },
                             onClick = {},
                             text = R.string.calc_button_second,
-//                            button = true
+                            button = true
                         )
                     }
                 }

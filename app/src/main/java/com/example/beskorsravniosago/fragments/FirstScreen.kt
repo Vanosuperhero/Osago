@@ -1,6 +1,7 @@
 package com.example.beskorsravniosago.fragments
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -81,7 +82,8 @@ class FirstScreen : Fragment() {
         content: @Composable () -> Unit,
         title: @Composable () -> Unit,
         onClick: () -> Unit,
-        text: Int
+        text: Int,
+        button: Boolean
     ) {
         if (viewModel.bottomSheetScaffoldState.bottomSheetState.isCollapsed){
             viewModel.getDataCoefficients()
@@ -91,7 +93,7 @@ class FirstScreen : Fragment() {
                 Screen(viewModel,{ content() },{ title() })
             }
             Box(modifier = Modifier.align(Alignment.BottomCenter)) {
-                Calculation(onClick, text, viewModel)
+                Calculation(onClick, text, viewModel, button)
             }
         }
     }
@@ -256,11 +258,11 @@ class FirstScreen : Fragment() {
                     )
                 }
                 Text(
-                text = forDetailText.detailText,
-                fontSize = 12.sp,
-                fontFamily = MyFontsFamily,
-                fontWeight = FontWeight.Normal,
-                color = MaterialTheme.colors.background
+                    text = forDetailText.detailText,
+                    fontSize = 12.sp,
+                    fontFamily = MyFontsFamily,
+                    fontWeight = FontWeight.Normal,
+                    color = MaterialTheme.colors.background
                 )
             }
             Box(
@@ -277,7 +279,6 @@ class FirstScreen : Fragment() {
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colors.secondary
                 )
-
             }
         }
     }
@@ -286,10 +287,9 @@ class FirstScreen : Fragment() {
     fun Calculation(
         onClick: () -> Unit,
         text: Int,
-        viewModel: FirstScreenViewModel
+        viewModel: FirstScreenViewModel,
+        button:Boolean
     ) {
-        var button by remember {mutableStateOf(false)}
-        button = viewModel.fieldList.all { it.livedata.value.isNotBlank() }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -308,7 +308,8 @@ class FirstScreen : Fragment() {
                     backgroundColor = MaterialTheme.colors.primary,
                     disabledBackgroundColor = MaterialTheme.colors.onSecondary,
                     contentColor = MaterialTheme.colors.primaryVariant,
-                    disabledContentColor = MaterialTheme.colors.onPrimary)
+                    disabledContentColor = MaterialTheme.colors.onPrimary
+                )
             )
             {
                 Text(
@@ -360,7 +361,7 @@ class FirstScreen : Fragment() {
         field: Int,
         scope: CoroutineScope,
         keyboardController:  SoftwareKeyboardController?
-        ) {
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -416,27 +417,27 @@ class FirstScreen : Fragment() {
         )
         {
             Column {
-            Text(
-                modifier = Modifier
-                    .padding(start = 16.dp, end = 16.dp, top = 9.dp, bottom = 1.dp)
-                    .align(alignment = Alignment.Start),
-                text = stringResource(viewModel.fieldList[field].titleAfter),
-                fontSize = 12.sp,
-                fontFamily = MyFontsFamily,
-                fontWeight = FontWeight.Normal,
-                color = MaterialTheme.colors.background
-            )
-            Text(
-                modifier = Modifier
-                    .padding(start = 16.dp, end = 16.dp, bottom = 6.dp)
-                    .align(alignment = Alignment.Start),
-                text = viewModel.fieldList[field].livedata.value,
-                fontSize = 16.sp,
-                fontFamily = MyFontsFamily,
-                fontWeight = FontWeight.Normal,
-                color = MaterialTheme.colors.secondary
-            )
-        }
+                Text(
+                    modifier = Modifier
+                        .padding(start = 16.dp, end = 16.dp, top = 9.dp, bottom = 1.dp)
+                        .align(alignment = Alignment.Start),
+                    text = stringResource(viewModel.fieldList[field].titleAfter),
+                    fontSize = 12.sp,
+                    fontFamily = MyFontsFamily,
+                    fontWeight = FontWeight.Normal,
+                    color = MaterialTheme.colors.background
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(start = 16.dp, end = 16.dp, bottom = 6.dp)
+                        .align(alignment = Alignment.Start),
+                    text = viewModel.fieldList[field].livedata.value,
+                    fontSize = 16.sp,
+                    fontFamily = MyFontsFamily,
+                    fontWeight = FontWeight.Normal,
+                    color = MaterialTheme.colors.secondary
+                )
+            }
         }
     }
 
@@ -484,7 +485,7 @@ class FirstScreen : Fragment() {
                 )
                 val keyboardController = LocalSoftwareKeyboardController.current
                 val focusRequester = remember {FocusRequester()}
-                if (viewModel.showKeyboard.value) {
+                LaunchedEffect(true) {
                     focusRequester.requestFocus()
                 }
                 OutlinedTextField(
@@ -521,32 +522,32 @@ class FirstScreen : Fragment() {
                             }
                         }
                     ) {
-                            Text(
+                        Text(
+                            modifier = Modifier
+                                .padding(top = 10.dp, bottom = 10.dp, start = 7.dp),
+                            text = if (field != 5) {
+                                stringResource(R.string.next)
+                            } else{
+                                stringResource(R.string.confirm)
+                            },
+                            fontSize = 16.sp,
+                            fontFamily = MyFontsFamily,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colors.primaryVariant,
+                        )
+                        if (field != 5) {
+                            Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                            Icon(
+                                painter = painterResource(R.drawable.shape),
+                                contentDescription = stringResource(R.string.arrow),
                                 modifier = Modifier
-                                    .padding(top = 10.dp, bottom = 10.dp, start = 7.dp),
-                                text = if (field != 5) {
-                                    stringResource(R.string.next)
-                                } else{
-                                    stringResource(R.string.confirm)
-                                },
-                                fontSize = 16.sp,
-                                fontFamily = MyFontsFamily,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colors.primaryVariant,
+                                    .size(12.dp)
+                                    .padding(top = 2.dp),
+                                tint = MaterialTheme.colors.primaryVariant
                             )
-                            if (field != 5) {
-                                Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-                                Icon(
-                                    painter = painterResource(R.drawable.shape),
-                                    contentDescription = stringResource(R.string.arrow),
-                                    modifier = Modifier
-                                        .size(12.dp)
-                                        .padding(top = 2.dp),
-                                    tint = MaterialTheme.colors.primaryVariant
-                                )
-                            }
-                            Spacer(modifier = Modifier.padding(horizontal = 2.dp))
                         }
+                        Spacer(modifier = Modifier.padding(horizontal = 2.dp))
+                    }
                     if (field != 0) {
                         Button(modifier = Modifier
                             .align(Alignment.CenterStart)
@@ -583,6 +584,8 @@ class FirstScreen : Fragment() {
     fun HomeScreen() {
 //        val
         val focusManager = LocalFocusManager.current
+        var button by remember {mutableStateOf(false)}
+        button = viewModel.fieldList.all { it.livedata.value.isNotBlank() }
         focusManager.clearFocus()
         BottomSheetScaffold(
             scaffoldState = viewModel.bottomSheetScaffoldState,
@@ -599,7 +602,8 @@ class FirstScreen : Fragment() {
                 { FirstTitle() },
                 { if (viewModel.statusCoefficients.value == ApiStatus.DONE)
                 { findNavController().navigate(R.id.action_firstScreen_to_secondScreen) } },
-                R.string.calc_button_first
+                R.string.calc_button_first,
+                button
             )
         }
     }

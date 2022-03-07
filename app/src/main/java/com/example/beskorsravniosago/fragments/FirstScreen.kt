@@ -1,17 +1,19 @@
 package com.example.beskorsravniosago.fragments
 
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,26 +39,37 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.core.view.WindowCompat
 import androidx.navigation.fragment.findNavController
 import com.example.beskorsravniosago.collections.coefficients
 import com.example.beskorsravniosago.network.Factor
+import com.example.beskorsravniosago.network.Offer
 import com.example.beskorsravniosago.viewmodels.ApiStatus
 import com.example.beskorsravniosago.viewmodels.FirstScreenViewModel
-import com.google.accompanist.insets.LocalWindowInsets
-import com.google.accompanist.insets.ProvideWindowInsets
-import com.google.accompanist.insets.imePadding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import com.google.accompanist.insets.*
+import kotlinx.coroutines.*
 
 
 class FirstScreen : Fragment() {
 
     private val viewModel: FirstScreenViewModel by viewModels()
+    private var offer: MutableState<Offer?> = mutableStateOf(null)
+
+    @OptIn(ExperimentalMaterialApi::class)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        CoroutineScope(Dispatchers.Main).launch {
+            arguments?.getParcelable<Offer>("o")?.let {
+                offer.value = it
+                if (viewModel.success.value) {
+                    viewModel.confirm()
+                }
+            }
+        }
+    }
 
     @OptIn(ExperimentalMaterialApi::class)
     override fun onCreateView(
@@ -64,18 +77,20 @@ class FirstScreen : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         return ComposeView(requireContext()).apply {
+                WindowCompat.setDecorFitsSystemWindows(requireActivity().window, false)
+                requireActivity().window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
             setContent {
+                ProvideWindowInsets(windowInsetsAnimationsEnabled = false) {
                 BeskorSravniOsagoTheme{
-                    ProvideWindowInsets(windowInsetsAnimationsEnabled = true) {
                         HomeScreen()
-
                     }
                 }
             }
         }
     }
 
-    @OptIn(ExperimentalMaterialApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
+    @SuppressLint("CoroutineCreationDuringComposition")
+    @OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
     @Composable
     fun FinalScreen(
         viewModel: FirstScreenViewModel,
@@ -83,17 +98,43 @@ class FirstScreen : Fragment() {
         title: @Composable () -> Unit,
         onClick: () -> Unit,
         text: Int,
-        button: Boolean
+        button: Boolean,
+        coefficients: List<Factor>
     ) {
-        if (viewModel.bottomSheetScaffoldState.bottomSheetState.isCollapsed){
+        val scope = rememberCoroutineScope()
+        if (viewModel.confirm.value) {
+                    scope.launch {
+                        viewModel.expand()
+                        viewModel.unsuccess()
+                    }
+                }
+
+        val confirmStateChange = remember {    mutableStateOf(false)    }
+        if (!viewModel.bottomSheetScaffoldState.isVisible && confirmStateChange.value){
             viewModel.getDataCoefficients()
+            viewModel.unconfirm()
         }
-        Box {
-            Box(modifier = Modifier.align(Alignment.TopCenter)) {
-                Screen(viewModel,{ content() },{ title() })
+
+        if (viewModel.bottomSheetScaffoldState.isVisible){
+            confirmStateChange.value = true
+        }
+
+        val insets = LocalWindowInsets.current
+        val statusPadding = with(LocalDensity.current) { insets.statusBars.top.toDp() }
+        val navPadding = with(LocalDensity.current) { insets.navigationBars.bottom.toDp() }
+        Box(
+            Modifier
+                .background(MaterialTheme.colors.onSecondary)
+                .padding(top = statusPadding, bottom = navPadding)
+        ) {
+            Box(modifier = Modifier
+                .align(Alignment.TopCenter)) {
+                Screen(viewModel,{ content() },{ title() }, coefficients)
             }
-            Box(modifier = Modifier.align(Alignment.BottomCenter)) {
-                Calculation(onClick, text, viewModel, button)
+            Box(modifier = Modifier
+                .align(Alignment.BottomCenter)
+                ) {
+                Calculation(onClick, text, button)
             }
         }
     }
@@ -102,19 +143,20 @@ class FirstScreen : Fragment() {
     fun Screen(
         viewModel: FirstScreenViewModel,
         content: @Composable () -> Unit,
-        title: @Composable () -> Unit
+        title: @Composable () -> Unit,
+        coefficients: List<Factor>
     ) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = 100.dp)
-                .background(MaterialTheme.colors.onSecondary),
+                .background(MaterialTheme.colors.onSecondary)
         ) {
             item {
                 title()
             }
             item {
-                CardCalc(viewModel)
+                CardCalc(viewModel, coefficients)
             }
             item {
                 content()
@@ -138,20 +180,22 @@ class FirstScreen : Fragment() {
 
     @Composable
     fun CardCalc(
-        viewModel: FirstScreenViewModel
+        viewModel: FirstScreenViewModel,
+        coefficients: List<Factor>
     ) {
-        val coefficients = viewModel.liveCoefficients.value.factors
-        Box(
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            elevation = 0.dp,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colors.primaryVariant)
         ) {
             val expanded by remember { viewModel.expanded }
             Column(
                 Modifier
-                    .clickable { viewModel.refresh() }
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }) { viewModel.refresh() }
                     .background(MaterialTheme.colors.primaryVariant)
             ) {
                 Row {
@@ -258,11 +302,11 @@ class FirstScreen : Fragment() {
                     )
                 }
                 Text(
-                    text = forDetailText.detailText,
-                    fontSize = 12.sp,
-                    fontFamily = MyFontsFamily,
-                    fontWeight = FontWeight.Normal,
-                    color = MaterialTheme.colors.background
+                text = forDetailText.detailText,
+                fontSize = 12.sp,
+                fontFamily = MyFontsFamily,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colors.background
                 )
             }
             Box(
@@ -287,7 +331,6 @@ class FirstScreen : Fragment() {
     fun Calculation(
         onClick: () -> Unit,
         text: Int,
-        viewModel: FirstScreenViewModel,
         button:Boolean
     ) {
         Box(
@@ -308,8 +351,7 @@ class FirstScreen : Fragment() {
                     backgroundColor = MaterialTheme.colors.primary,
                     disabledBackgroundColor = MaterialTheme.colors.onSecondary,
                     contentColor = MaterialTheme.colors.primaryVariant,
-                    disabledContentColor = MaterialTheme.colors.onPrimary
-                )
+                    disabledContentColor = MaterialTheme.colors.onPrimary)
             )
             {
                 Text(
@@ -341,10 +383,12 @@ class FirstScreen : Fragment() {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
+    @OptIn(ExperimentalComposeUiApi::class,
+        ExperimentalMaterialApi::class,
+    )
     @Composable
     fun Input(
-        field: Int
+        field: Int,
     ) {
         val scope = rememberCoroutineScope()
         val keyboardController = LocalSoftwareKeyboardController.current
@@ -355,13 +399,15 @@ class FirstScreen : Fragment() {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
+    @OptIn(ExperimentalComposeUiApi::class,
+        ExperimentalMaterialApi::class,
+    )
     @Composable
     fun InputField(
         field: Int,
         scope: CoroutineScope,
-        keyboardController:  SoftwareKeyboardController?
-    ) {
+        keyboardController:  SoftwareKeyboardController?,
+        ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -371,10 +417,10 @@ class FirstScreen : Fragment() {
                 .background(MaterialTheme.colors.onSecondary)
                 .clickable {
                     viewModel.setDataToSheet(field)
-                    viewModel.refreshSheet()
                     keyboardController?.show()
                     scope.launch {
                         viewModel.expand()
+
                     }
                 }
         )
@@ -392,7 +438,7 @@ class FirstScreen : Fragment() {
         }
     }
 
-    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun AfterInputField(
         field: Int,
@@ -408,7 +454,6 @@ class FirstScreen : Fragment() {
                 .background(MaterialTheme.colors.onSecondary)
                 .clickable {
                     viewModel.setDataToSheet(field)
-                    viewModel.refreshSheet()
                     keyboardController?.show()
                     scope.launch {
                         viewModel.expand()
@@ -442,27 +487,32 @@ class FirstScreen : Fragment() {
     }
 
 
-    @OptIn(androidx.compose.material.ExperimentalMaterialApi::class,
-        androidx.compose.ui.ExperimentalComposeUiApi::class
+    @OptIn(ExperimentalMaterialApi::class,
+        ExperimentalComposeUiApi::class
     )
     @Composable
     fun BottomSheetContent() {
         val scope = rememberCoroutineScope()
         BackHandler(
-            enabled = viewModel.bottomSheetScaffoldState.bottomSheetState.isExpanded,
+            enabled = viewModel.bottomSheetScaffoldState.isVisible,
             onBack = {
                 scope.launch {
                     viewModel.collapse()
+
                 }
             }
         )
-        Box(Modifier
-            .background(MaterialTheme.colors.primaryVariant)
+
+        Box(
+            Modifier
+                .background(MaterialTheme.colors.primaryVariant)
+                .padding(bottom = 16.dp)
+                .fillMaxHeight(0.9f)
         ) {
+            val keyboardController = LocalSoftwareKeyboardController.current
             val field = viewModel.field.value
             Column(modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 100.dp, max = 750.dp)
             ) {
                 Box(modifier = Modifier.fillMaxWidth()) {
                     Image(
@@ -483,40 +533,45 @@ class FirstScreen : Fragment() {
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 24.dp),
                 )
-                val keyboardController = LocalSoftwareKeyboardController.current
-                val focusRequester = remember {FocusRequester()}
-                LaunchedEffect(true) {
-                    focusRequester.requestFocus()
-                }
-                OutlinedTextField(
-//                    enabled = (viewModel.bottomSheetScaffoldState.bottomSheetState.isExpanded || viewModel.bottomSheetScaffoldState.bottomSheetState.isAnimationRunning),
-//                    enabled = viewModel.sheetState.value,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = viewModel.fieldList[field].keyboardType),
+                 OutlinedTextField(
+                     keyboardOptions = KeyboardOptions(
+                     imeAction = ImeAction.Done,
+                     keyboardType = viewModel.fieldList[field].keyboardType
+                    ),
                     keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .focusRequester(focusRequester),
+                        .padding(horizontal = 16.dp),
                     value = viewModel.fieldList[field].livedata.value,
-                    onValueChange = {viewModel.setInput(it)},
+                    onValueChange = { viewModel.setInput(it) },
                     shape = RoundedCornerShape(12.dp),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colors.onBackground, cursorColor = Color.Black),
-                    placeholder = { Text(text = stringResource(viewModel.fieldList[field].placeholder), color = MaterialTheme.colors.surface) },
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        textColor = MaterialTheme.colors.onBackground,
+                        cursorColor = Color.Black
+                    ),
+                    placeholder = {
+                    Text(
+                        text = stringResource(viewModel.fieldList[field].placeholder),
+                        color = MaterialTheme.colors.surface
+                    )
+                    }
                 )
-                Box(modifier = Modifier
-                    .fillMaxSize()
-                    .imePadding()
-                    .padding(bottom = 300.dp)
-                ){
-                    Button(modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 16.dp)
-                        .clip(RoundedCornerShape(18.dp)),
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .navigationBarsWithImePadding()
+                ) {
+                    Button(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 16.dp)
+                            .clip(RoundedCornerShape(18.dp)),
                         onClick = {
-                            if(viewModel.field.value < 5) {
-                                keyboardController?.show() }
-                            else{
-                                keyboardController?.hide() }
+                            if (viewModel.field.value < 5) {
+                                keyboardController?.show()
+                            } else {
+                                keyboardController?.hide()
+                            }
                             scope.launch {
                                 viewModel.next()
                             }
@@ -527,7 +582,7 @@ class FirstScreen : Fragment() {
                                 .padding(top = 10.dp, bottom = 10.dp, start = 7.dp),
                             text = if (field != 5) {
                                 stringResource(R.string.next)
-                            } else{
+                            } else {
                                 stringResource(R.string.confirm)
                             },
                             fontSize = 16.sp,
@@ -549,10 +604,11 @@ class FirstScreen : Fragment() {
                         Spacer(modifier = Modifier.padding(horizontal = 2.dp))
                     }
                     if (field != 0) {
-                        Button(modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(start = 16.dp)
-                            .size(59.dp),
+                        Button(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(start = 16.dp)
+                                .size(59.dp),
                             elevation = ButtonDefaults.elevation(
                                 defaultElevation = 0.dp,
                                 pressedElevation = 0.dp,
@@ -563,7 +619,8 @@ class FirstScreen : Fragment() {
                             colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primaryVariant),
                             onClick = {
                                 viewModel.back()
-                                keyboardController?.show()},
+                                keyboardController?.show()
+                            },
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.shape_flip),
@@ -579,31 +636,126 @@ class FirstScreen : Fragment() {
         }
     }
 
+    @OptIn(ExperimentalMaterialApi::class)
+    @Composable
+    fun BottomSheetOffer(
+        onBack: () -> Unit
+    ) {
+        val insets = LocalWindowInsets.current
+        val imeBottom = with(LocalDensity.current) { insets.navigationBars.bottom.toDp() }
+    val scope = rememberCoroutineScope()
+    BackHandler(
+            enabled = viewModel.bottomSheetScaffoldState.isVisible,
+            onBack = {
+                onBack()
+                viewModel.unconfirm()
+                offer.value = null
+                findNavController().previousBackStackEntry?.savedStateHandle?.set("key", null)
+            }
+        )
+        Box(
+            Modifier
+                .background(MaterialTheme.colors.primaryVariant)
+                .padding(bottom = imeBottom)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Image(
+                        modifier = Modifier
+                            .align(alignment = Alignment.TopCenter)
+                            .padding(top = 8.dp),
+                        painter = painterResource(R.drawable.tip),
+                        contentDescription = stringResource(R.string.tip)
+                    )
+                }
+                Text(
+                    fontSize = 20.sp,
+                    text = stringResource(R.string.success),
+                    fontFamily = MyFontsFamily,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colors.onBackground,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 4.dp)
+                )
+                Box(Modifier.padding(vertical = 10.dp)){
+                    offer.value?.let {
+                        SecondScreen().Offer(it)
+                    }
+                }
+                Button(
+                    onClick = {
+                        scope.launch {
+                            viewModel.collapse()
+                            viewModel.unconfirm()
+                            offer.value = null
+                            if (viewModel.statusCoefficients.value == ApiStatus.DONE ) {
+                                findNavController().navigate(R.id.firstScreen) }
+                            findNavController()
+                                .previousBackStackEntry?.savedStateHandle?.set("key", null)
+                        } },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = MaterialTheme.colors.primary,
+                        contentColor = MaterialTheme.colors.primaryVariant)
+                )
+                {
+                    Text(
+                        modifier = Modifier
+                            .align(Alignment.CenterVertically),
+                        text = stringResource(R.string.ok),
+                        fontSize = 17.sp,
+                        fontFamily = MyFontsFamily,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+    }
+
     @ExperimentalMaterialApi
     @Composable
     fun HomeScreen() {
-//        val
         val focusManager = LocalFocusManager.current
-        var button by remember {mutableStateOf(false)}
-        button = viewModel.fieldList.all { it.livedata.value.isNotBlank() }
+        val button = true
+//            viewModel.fieldList.any{it.livedata.value.isNotBlank()}
+        val coefficients = viewModel.liveCoefficients.value
+        val bundle = Bundle()
+        bundle.putParcelable("c", coefficients)
         focusManager.clearFocus()
-        BottomSheetScaffold(
-            scaffoldState = viewModel.bottomSheetScaffoldState,
+        ModalBottomSheetLayout(
+            sheetState = viewModel.bottomSheetScaffoldState,
             sheetContent = {
-                BottomSheetContent()
+                if (viewModel.confirm.value){
+                    BottomSheetOffer {
+                        findNavController().navigate(
+                            R.id.action_firstScreen_to_secondScreen,
+                            bundle
+                        )
+                    }
+                }else{
+                    BottomSheetContent()
+                }
             },
-            sheetPeekHeight = 0.dp,
             sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
             sheetBackgroundColor = Color.White,
         ) {
-            FinalScreen(
-                viewModel,
-                { InputFieldsCard() },
-                { FirstTitle() },
-                { if (viewModel.statusCoefficients.value == ApiStatus.DONE)
-                { findNavController().navigate(R.id.action_firstScreen_to_secondScreen) } },
-                R.string.calc_button_first,
-                button
+        FinalScreen(
+            viewModel,
+            { InputFieldsCard() },
+            { FirstTitle() },
+            { if (viewModel.statusCoefficients.value == ApiStatus.DONE) {
+                findNavController().navigate(R.id.action_firstScreen_to_secondScreen, bundle) } },
+            R.string.calc_button_first,
+            button,
+            coefficients.factors
             )
         }
     }

@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.beskorsravniosago.R
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.*
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.beskorsravniosago.collections.InputFieldData
 import com.example.beskorsravniosago.collections.coefficients
@@ -18,6 +17,8 @@ import com.example.beskorsravniosago.network.Offers
 import retrofit2.await
 
 enum class ApiStatus{LOADING,ERROR,DONE}
+enum class Inputs{BASE,POWER,TERRITORY,ACCIDENT,AGE,LIMIT}
+
 class FirstScreenViewModel : ViewModel() {
 
     private val _statusCoefficients = mutableStateOf(ApiStatus.LOADING)
@@ -29,23 +30,11 @@ class FirstScreenViewModel : ViewModel() {
     private val _expanded = mutableStateOf(false)
     var expanded: MutableState<Boolean> = _expanded
 
-    private val _sheetState = mutableStateOf(false)
-    var sheetState: MutableState<Boolean> = _sheetState
-
     fun refresh() {
         viewModelScope.launch {
             _expanded.value =! _expanded.value
         }
     }
-
-    fun refreshSheet() {
-        viewModelScope.launch {
-            _sheetState.value =! _sheetState.value
-        }
-    }
-
-    private val _showKeyboard = mutableStateOf(false)
-    var showKeyboard: MutableState<Boolean> = _showKeyboard
 
     private val _inputBase = mutableStateOf("")
     private var inputBase: MutableState<String> = _inputBase
@@ -80,49 +69,23 @@ class FirstScreenViewModel : ViewModel() {
 
     fun setInput(input: String) {
         viewModelScope.launch {
-            when (_field.value) {
-                0 -> _inputBase.value = input
-                1 -> inputPower.value = input
-                2 -> _inputTerritory.value = input
-                3 -> _inputAccident.value = input
-                4 -> _inputAge.value = input
-                5 -> _inputLimit.value = input
-            }
+            fieldList[field.value].livedata.value = input
         }
-    }
-
-    fun setImage(index: Int):Int {
-        var painter = 0
-        viewModelScope.launch {
-            when (index) {
-                0 -> painter = (R.drawable.soglas)
-                1 -> painter = (R.drawable.inngo)
-                2 -> painter = (R.drawable.alpha)
-                3 -> painter = (R.drawable.sogaz_c)
-                4 -> painter = (R.drawable.renes)
-                5 -> painter = (R.drawable.uralsib)
-            }
-        }
-        return painter
     }
 
     fun setDataToSheet(field: Int) {
         viewModelScope.launch {
             _field.value = field
-            _showKeyboard.value =! _showKeyboard.value
         }
     }
-
 
     private val _liveCoefficients = mutableStateOf(coefficients)
     var liveCoefficients: MutableState<Factors> = _liveCoefficients
 
-    private var i = 0
 
     fun getDataCoefficients(){
         viewModelScope.launch {
             val getDataDeferred = Api.retrofitApi.pushPost()
-            if (i > 0) {
                 try {
                     _statusCoefficients.value = ApiStatus.LOADING
                     val listResult = getDataDeferred.await()
@@ -131,15 +94,13 @@ class FirstScreenViewModel : ViewModel() {
                 }catch (e:Exception) {
                     _statusCoefficients.value = ApiStatus.ERROR
                 }
-            }
         }
-        i++
     }
 
     private val _liveOffers = mutableStateOf(offers)
     var liveOffers: MutableState<Offers> = _liveOffers
 
-    private fun getDataOffers(){
+    fun getDataOffers(){
         viewModelScope.launch {
             val getDataDeferred = ApiOffer.retrofitApi.pushPost()
             try {
@@ -154,7 +115,7 @@ class FirstScreenViewModel : ViewModel() {
     }
 
     suspend fun next() {
-        if (field.value < 5) {
+        if (Inputs.values()[_field.value] != Inputs.LIMIT) {
             setDataToSheet(field.value + 1)
         } else{
             collapse()
@@ -162,29 +123,50 @@ class FirstScreenViewModel : ViewModel() {
     }
 
     fun back() {
-        if (field.value > 0) {
+        if (Inputs.values()[_field.value] != Inputs.BASE) {
             setDataToSheet(field.value - 1)
         }
     }
 
     @OptIn(ExperimentalMaterialApi::class)
     suspend fun expand(){
-        bottomSheetScaffoldState.bottomSheetState.expand()
+        bottomSheetScaffoldState.show()
     }
     @OptIn(ExperimentalMaterialApi::class)
     suspend fun collapse(){
-        bottomSheetScaffoldState.bottomSheetState.collapse()
+        bottomSheetScaffoldState.hide()
+    }
+
+    private val _confirm = mutableStateOf(false)
+    var confirm: MutableState<Boolean> = _confirm
+
+
+    fun confirm() {
+        viewModelScope.launch {
+            _confirm.value  = true
+        }
+    }
+
+    fun unconfirm() {
+        viewModelScope.launch {
+            _confirm.value  = false
+        }
+    }
+
+    private val _success = mutableStateOf(true)
+    var success: MutableState<Boolean> = _success
+
+    fun unsuccess() {
+        viewModelScope.launch {
+            _success.value  = false
+        }
     }
 
     @OptIn(ExperimentalMaterialApi::class)
-    val bottomSheetScaffoldState = BottomSheetScaffoldState(
-        bottomSheetState = BottomSheetState(BottomSheetValue.Collapsed),
-        drawerState = DrawerState(DrawerValue.Closed),
-        snackbarHostState =  SnackbarHostState()
+    val bottomSheetScaffoldState = ModalBottomSheetState(
+        initialValue = ModalBottomSheetValue.Hidden,
+            isSkipHalfExpanded = true,
     )
 
-    init {
-        getDataOffers()
-    }
 }
 

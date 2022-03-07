@@ -4,6 +4,8 @@
     <string name="second_title">Расчёт цены полиса</string>
     <string name="calc_button_first">Рассчитать ОСАГО</string>
     <string name="calc_button_second">Рассчитать точную цену и купить</string>
+    <string name="success">Ваш полис успешно оформлен</string>
+    <string name="ok">Готово</string>
     <string name="check_mark">Стрелка вниз</string>
     <string name="calculator">Значок калькулятора</string>
     <string name="icon">Иконка</string>
@@ -28,4 +30,25 @@
     <string name="fourth_placeholder">Введите возраст</string>
     <string name="fifth_placeholder">Введите стаж</string>
     <string name="sixth_placeholder">Введите количество лет</string>
+
+    <string name="БТ">БТ</string>
+    <string name="p2754">2 754 – 4 432 Р</string>
+    <string name="базовый_тариф">базовый тариф</string>
+    <string name="Устанавливает">Устанавливает страховая" + "\n" + "компания</string>
+<!--    <string name="tip">Палочка</string>-->
+<!--    <string name="tip">Палочка</string>-->
+<!--    <string name="tip">Палочка</string>-->
+<!--    <string name="tip">Палочка</string>-->
+<!--    <string name="tip">Палочка</string>-->
+<!--    <string name="tip">Палочка</string>-->
+<!--    <string name="tip">Палочка</string>-->
+<!--    <string name="tip">Палочка</string>-->
+<!--    <string name="tip">Палочка</string>-->
+<!--    <string name="tip">Палочка</string>-->
+<!--    <string name="tip">Палочка</string>-->
+<!--    <string name="tip">Палочка</string>-->
+<!--    <string name="tip">Палочка</string>-->
+
+
+
 </resources>

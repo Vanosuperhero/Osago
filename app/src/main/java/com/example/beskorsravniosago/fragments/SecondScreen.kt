@@ -28,17 +28,38 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.fragment.findNavController
+import coil.compose.rememberAsyncImagePainter
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
+import com.example.beskorsravniosago.network.Factor
+import com.example.beskorsravniosago.network.Factors
 import com.example.beskorsravniosago.network.Offer
 import com.example.beskorsravniosago.viewmodels.ApiStatus
 import com.example.beskorsravniosago.viewmodels.FirstScreenViewModel
 import com.google.accompanist.insets.ProvideWindowInsets
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SecondScreen : Fragment() {
 
     private val viewModel: FirstScreenViewModel by viewModels()
+
+    private var coefficients: MutableState<List<Factor>?> = mutableStateOf(null)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        CoroutineScope(Dispatchers.Main).launch {
+            arguments?.getParcelable<Factors>("c")?.let {
+                coefficients.value = it.factors
+            }
+        }
+    }
 
     @OptIn(ExperimentalMaterialApi::class)
     override fun onCreateView(
@@ -46,21 +67,23 @@ class SecondScreen : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         return ComposeView(requireContext()).apply {
-            viewModel.getDataCoefficients()
+            viewModel.getDataOffers()
             setContent {
                 BeskorSravniOsagoTheme {
                     ProvideWindowInsets(windowInsetsAnimationsEnabled = true) {
-                        FirstScreen().FinalScreen(
-                            viewModel,
-                            content = { if (viewModel.statusOffers.value == ApiStatus.DONE)
-                            {
-                                OfferList(viewModel,viewModel.liveOffers.value.offers)
-                            } else { BlankList() }},
-                            title = { SecondTitle() },
-                            onClick = {},
-                            text = R.string.calc_button_second,
-                            button = true
-                        )
+                        coefficients.value?.let {
+                            FirstScreen().FinalScreen(
+                                viewModel,
+                                content = { if (viewModel.statusOffers.value == ApiStatus.DONE) {
+                                    OfferList(viewModel.liveOffers.value.offers)
+                                } else { BlankList() }},
+                                title = { SecondTitle() },
+                                onClick = {},
+                                text = R.string.calc_button_second,
+                                button = true,
+                                coefficients = it
+                            )
+                        }
                     }
                 }
             }
@@ -80,7 +103,8 @@ class SecondScreen : Fragment() {
                     .padding(top = 2.dp)
                     .size(14.dp)
                     .clickable {
-                        findNavController().navigate(R.id.firstScreen)
+                        findNavController()
+                            .popBackStack()
                     },
                 tint = MaterialTheme.colors.onBackground
             )
@@ -99,35 +123,44 @@ class SecondScreen : Fragment() {
 
     @Composable
     fun Offer(
-        viewModel: FirstScreenViewModel,
         offer: Offer,
-        index: Int
     ) {
+        val bundle = Bundle()
+        bundle.putParcelable("o", offer)
+
         Card(
-            elevation = 10.dp,
+            shape = RoundedCornerShape(16.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colors.primaryVariant),
+                .height(84.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+            elevation = 4.dp,
         ) {
             Row(
                 Modifier
-                    .clickable { }
+                    .clickable {
+                        findNavController().navigate(R.id.action_secondScreen_to_firstScreen, bundle)
+                    }
                     .background(MaterialTheme.colors.primaryVariant)
             ) {
                 Box(
                     modifier = Modifier
                         .padding(top = 16.dp, bottom = 16.dp, start = 16.dp, end = 12.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colors.onSecondary)
+                        .background(Color(android.graphics.Color.parseColor("#${offer.branding.backgroundColor}")))
                         .size(width = 36.dp, height = 36.dp)
                 ) {
+                    val image = rememberAsyncImagePainter(
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(data = offer.branding.bankLogoUrlSVG)
+                            .decoderFactory(SvgDecoder.Factory())
+                            .build()
+                    )
                     Image(
-                        painter = painterResource(viewModel.setImage(index)),
+                        painter = image,
                         modifier = Modifier
                             .align(alignment = Alignment.Center),
-                        contentScale = ContentScale.FillHeight,
+                        contentScale = ContentScale.FillBounds,
                         contentDescription = stringResource(R.string.icon),
                     )
                 }
@@ -184,13 +217,13 @@ class SecondScreen : Fragment() {
     @Composable
     fun OfferBlank() {
         Card(
-            elevation = 10.dp,
+            shape = RoundedCornerShape(16.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp)
-                .background(MaterialTheme.colors.primaryVariant)
-                .clip(RoundedCornerShape(16.dp)),
-        ) {
+                .height(84.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+            elevation = 4.dp,
+            ) {
             Row(
                 Modifier
                     .clickable { }
@@ -200,25 +233,30 @@ class SecondScreen : Fragment() {
                     modifier = Modifier
                         .padding(top = 16.dp, bottom = 16.dp, start = 16.dp, end = 12.dp)
                         .size(width = 36.dp, height = 36.dp)
+                        .clip(RoundedCornerShape(10.dp))
                         .background(MaterialTheme.colors.onSecondary)
-                        .clip(RoundedCornerShape(16.dp))
                 )
                 Column(
                     Modifier.align(Alignment.CenterVertically)
                 ) {
-                    Box(modifier = Modifier
-                        .padding(top = 16.dp, bottom = 2.dp)
-                        .size(width = 151.dp, height = 20.dp)
-                        .background(MaterialTheme.colors.onSecondary))
-                    Box(modifier = Modifier
-                        .padding(top = 2.dp, bottom = 16.dp)
-                        .size(width = 151.dp, height = 12.dp)
-                        .background(MaterialTheme.colors.onSecondary))
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 16.dp, bottom = 2.dp)
+                            .size(width = 151.dp, height = 20.dp)
+                            .background(MaterialTheme.colors.onSecondary)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 1.dp, bottom = 16.dp)
+                            .size(width = 151.dp, height = 12.dp)
+                            .background(MaterialTheme.colors.onSecondary)
+                    )
                 }
                 Box(
                     Modifier
                         .fillMaxSize()
-                        .align(Alignment.CenterVertically)){
+                        .align(Alignment.CenterVertically)
+                ) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
@@ -233,7 +271,6 @@ class SecondScreen : Fragment() {
 
     @Composable
     fun OfferList(
-        viewModel: FirstScreenViewModel,
         offers: List<Offer>
     ){
         Column(
@@ -241,7 +278,7 @@ class SecondScreen : Fragment() {
                 .fillMaxWidth()
         ) {
             for (offer in offers){
-                Offer(viewModel, offer, offers.indexOf(offer))
+                Offer(offer)
             }
         }
     }
@@ -251,10 +288,10 @@ class SecondScreen : Fragment() {
             modifier = Modifier
                 .fillMaxWidth()
         ){
-            OfferBlank()
-            OfferBlank()
-            OfferBlank()
-            OfferBlank()
+            for(i in 0..3){
+                OfferBlank()
+            }
         }
     }
 }
+

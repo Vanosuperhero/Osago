@@ -38,6 +38,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -492,7 +494,6 @@ class FirstScreen : Fragment() {
             onBack = {
                 scope.launch {
                     viewModel.collapse()
-
                 }
             }
         )
@@ -527,11 +528,12 @@ class FirstScreen : Fragment() {
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 24.dp),
                 )
-//                val focusRequester = remember { FocusRequester() }
-//                LaunchedEffect(Unit) {
-//                    keyboardController?.hide()
-//                    focusRequester.requestFocus()
-//                }
+                val focusRequester = remember { FocusRequester() }
+                if (viewModel.bottomSheetScaffoldState.isVisible){
+                    LaunchedEffect(Unit) {
+                        focusRequester.requestFocus()
+                    }
+                }
                  OutlinedTextField(
                      keyboardOptions = KeyboardOptions(
                      imeAction = ImeAction.Done,
@@ -540,8 +542,8 @@ class FirstScreen : Fragment() {
                     keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-//                        .focusRequester(focusRequester),
+                        .padding(horizontal = 16.dp)
+                        .focusRequester(focusRequester),
                     value = viewModel.fieldList[field].livedata.value,
                     onValueChange = { viewModel.setInput(it) },
                     shape = RoundedCornerShape(12.dp),
@@ -724,7 +726,6 @@ class FirstScreen : Fragment() {
     @Composable
     fun HomeScreen() {
         val button = viewModel.fieldList.all{it.livedata.value.isNotBlank()}
-
         val coefficients = viewModel.liveCoefficients.value
         val bundle = Bundle()
         bundle.putParcelable("c", coefficients)

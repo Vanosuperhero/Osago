@@ -1,7 +1,6 @@
 package com.example.beskorsravniosago.fragments
 
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -20,7 +19,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.fragment.app.viewModels
 import com.example.beskorsravniosago.R
 import com.example.beskorsravniosago.ui.theme.*
 import androidx.compose.material.Text
@@ -278,14 +276,11 @@ class SecondScreen : Fragment() {
                 .fillMaxWidth()
         ) {
             for (offer in offers){
-//                val bundle = Bundle()
-//                bundle.putParcelable("o", offer)
                 Offer(offer) {
                     viewModel.offer(offer)
                     viewModel.confirm()
                     findNavController().navigate(
-                        R.id.action_secondScreen_to_firstScreen,
-//                        bundle
+                        R.id.action_secondScreen_to_firstScreen
                     )}
                 }
             }

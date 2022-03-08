@@ -2,7 +2,6 @@ package com.example.beskorsravniosago.fragments
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -27,7 +26,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.fragment.app.viewModels
 import com.example.beskorsravniosago.R
 import com.example.beskorsravniosago.ui.theme.*
 import androidx.compose.material.Text
@@ -40,8 +38,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -50,7 +46,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.beskorsravniosago.collections.coefficients
 import com.example.beskorsravniosago.network.Factor
-import com.example.beskorsravniosago.network.Offer
 import com.example.beskorsravniosago.viewmodels.ApiStatus
 import com.example.beskorsravniosago.viewmodels.FirstScreenViewModel
 import com.google.accompanist.insets.*
@@ -61,22 +56,6 @@ import kotlinx.coroutines.*
 class FirstScreen : Fragment() {
 
     private val viewModel: FirstScreenViewModel by activityViewModels()
-
-//    private var offer: MutableState<Offer?> = mutableStateOf(null)
-
-//    @OptIn(ExperimentalMaterialApi::class)
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        CoroutineScope(Dispatchers.Main).launch {
-//            arguments?.getParcelable<Offer>("o")?.let {
-//                offer.value = it
-//                if (viewModel.success.value) {
-//                    viewModel.confirm()
-//                    Log.d("TAG","success ")
-//                }
-//            }
-//        }
-//    }
 
     @OptIn(ExperimentalMaterialApi::class)
     override fun onCreateView(
@@ -118,28 +97,22 @@ class FirstScreen : Fragment() {
         }
         val scope = rememberCoroutineScope()
 
-
         val confirmStateChange = remember {    mutableStateOf(false)    }
 
         if (!viewModel.bottomSheetScaffoldState.isVisible && !viewModel.bottomSheetScaffoldState.isAnimationRunning && confirmStateChange.value && viewModel.confirm.value){
-            viewModel.unconfirm()
-            Log.d("TAG","unconfirm ${viewModel.confirm.value}")
+            viewModel.unConfirm()
         }
         if (!viewModel.bottomSheetScaffoldState.isVisible && !viewModel.bottomSheetScaffoldState.isAnimationRunning && confirmStateChange.value && viewModel.statusCoefficients.value != ApiStatus.DONE && !viewModel.confirm.value){
             viewModel.getDataCoefficients()
-            Log.d("TAG","get data ${viewModel.confirm.value}")
         }
         if (viewModel.bottomSheetScaffoldState.isVisible){
             confirmStateChange.value = true
         }
         if (viewModel.confirm.value && !viewModel.bottomSheetScaffoldState.isVisible && !viewModel.bottomSheetScaffoldState.isAnimationRunning){
-            Log.d("TAG","if confirmvalue")
             scope.launch {
                 viewModel.expand()
-                Log.d("TAG","expand")
             }
         }
-
         val insets = LocalWindowInsets.current
         val statusPadding = with(LocalDensity.current) { insets.statusBars.top.toDp() }
         val navPadding = with(LocalDensity.current) { insets.navigationBars.bottom.toDp() }
@@ -675,9 +648,8 @@ class FirstScreen : Fragment() {
             enabled = viewModel.bottomSheetScaffoldState.isVisible,
             onBack = {
                 onBack()
-                viewModel.unconfirm()
+                viewModel.unConfirm()
                 viewModel.offer(null)
-//                offer.value = null
                 findNavController().previousBackStackEntry?.savedStateHandle?.set("key", null)
             }
         )
@@ -718,7 +690,7 @@ class FirstScreen : Fragment() {
                     onClick = {
                         scope.launch {
                             viewModel.collapse()
-                            viewModel.unconfirm()
+                            viewModel.unConfirm()
                             viewModel.offer.value = null
                             if (viewModel.statusCoefficients.value == ApiStatus.DONE ) {
                                 findNavController().navigate(R.id.firstScreen) }
@@ -751,21 +723,13 @@ class FirstScreen : Fragment() {
     @ExperimentalMaterialApi
     @Composable
     fun HomeScreen() {
-        val focusManager = LocalFocusManager.current
         val button = true
             //            viewModel.fieldList.any{it.livedata.value.isNotBlank()}
 
-//            viewModel.inputBase.value.isNotBlank() &&
-//       viewModel.inputPower.value.isNotBlank() &&
-//        viewModel.inputTerritory.value.isNotBlank() &&
-//        viewModel.inputAccident.value.isNotBlank() &&
-//        viewModel.inputAge.value.isNotBlank() &&
-//        viewModel.inputLimit.value.isNotBlank()
 
         val coefficients = viewModel.liveCoefficients.value
         val bundle = Bundle()
         bundle.putParcelable("c", coefficients)
-        val bundles = Bundle()
         ModalBottomSheetLayout(
             sheetState = viewModel.bottomSheetScaffoldState,
             sheetContent = {

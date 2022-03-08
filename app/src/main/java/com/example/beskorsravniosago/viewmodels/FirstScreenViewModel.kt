@@ -34,30 +34,30 @@ class FirstScreenViewModel : ViewModel() {
     }
 
     private val _inputBase = mutableStateOf("")
-     var inputBase: MutableState<String> = _inputBase
+    private var inputBase: MutableState<String> = _inputBase
 
     private val _inputPower = mutableStateOf("")
-     var inputPower: MutableState<String> = _inputPower
+    private var inputPower: MutableState<String> = _inputPower
 
     private val _inputTerritory = mutableStateOf("")
-     var inputTerritory: MutableState<String> = _inputTerritory
+    private var inputTerritory: MutableState<String> = _inputTerritory
 
     private val _inputAccident = mutableStateOf("")
-     var inputAccident: MutableState<String> = _inputAccident
+    private var inputAccident: MutableState<String> = _inputAccident
 
     private val _inputAge = mutableStateOf("")
-     var inputAge: MutableState<String> = _inputAge
+    private var inputAge: MutableState<String> = _inputAge
 
     private val _inputLimit = mutableStateOf("")
-     var inputLimit: MutableState<String> = _inputLimit
+    private var inputLimit: MutableState<String> = _inputLimit
 
 
-     var fieldBase = InputFieldData(inputBase,R.string.first_field,R.string.first_field_after,R.string.first_placeholder,KeyboardType.Text)
-     var fieldPower = InputFieldData(inputPower,R.string.second_field,R.string.second_field,R.string.second_placeholder,KeyboardType.Number)
-     var fieldTerritory = InputFieldData(inputTerritory,R.string.third_field,R.string.third_field,R.string.third_placeholder,KeyboardType.Number)
-     var fieldAccident = InputFieldData(inputAccident,R.string.fourth_field,R.string.fourth_field,R.string.fourth_placeholder,KeyboardType.Number)
-     var fieldAge = InputFieldData(inputAge,R.string.fifth_field,R.string.fifth_field,R.string.fifth_placeholder,KeyboardType.Number)
-     var fieldLimit = InputFieldData(inputLimit,R.string.sixth_field,R.string.sixth_field,R.string.sixth_placeholder,KeyboardType.Number)
+    private var fieldBase = InputFieldData(inputBase,R.string.first_field,R.string.first_field_after,R.string.first_placeholder,KeyboardType.Text)
+    private var fieldPower = InputFieldData(inputPower,R.string.second_field,R.string.second_field,R.string.second_placeholder,KeyboardType.Number)
+    private var fieldTerritory = InputFieldData(inputTerritory,R.string.third_field,R.string.third_field,R.string.third_placeholder,KeyboardType.Number)
+    private var fieldAccident = InputFieldData(inputAccident,R.string.fourth_field,R.string.fourth_field,R.string.fourth_placeholder,KeyboardType.Number)
+    private var fieldAge = InputFieldData(inputAge,R.string.fifth_field,R.string.fifth_field,R.string.fifth_placeholder,KeyboardType.Number)
+    private var fieldLimit = InputFieldData(inputLimit,R.string.sixth_field,R.string.sixth_field,R.string.sixth_placeholder,KeyboardType.Number)
 
     val fieldList = listOf(fieldBase, fieldPower, fieldTerritory, fieldAccident, fieldAge, fieldLimit)
 
@@ -152,18 +152,9 @@ class FirstScreenViewModel : ViewModel() {
         }
     }
 
-    fun unconfirm() {
+    fun unConfirm() {
         viewModelScope.launch {
             _confirm.value  = false
-        }
-    }
-
-    private val _success = mutableStateOf(true)
-    var success: MutableState<Boolean> = _success
-
-    fun unsuccess() {
-        viewModelScope.launch {
-            _success.value  = false
         }
     }
 

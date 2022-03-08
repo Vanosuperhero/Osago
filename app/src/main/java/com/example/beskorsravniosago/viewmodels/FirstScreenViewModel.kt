@@ -66,15 +66,7 @@ class FirstScreenViewModel : ViewModel() {
 
     fun setInput(input: String) {
         viewModelScope.launch {
-            when(field.value){
-                0 -> _inputBase.value = input
-                1 -> _inputPower.value = input
-                2 -> _inputTerritory.value = input
-                3 -> _inputAccident.value = input
-                4 -> _inputAge.value = input
-                5 -> _inputLimit.value = input
-            }
-//            fieldList[field.value].livedata.value = input
+            fieldList[field.value].livedata.value = input
         }
     }
 

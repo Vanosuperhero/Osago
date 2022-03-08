@@ -723,9 +723,7 @@ class FirstScreen : Fragment() {
     @ExperimentalMaterialApi
     @Composable
     fun HomeScreen() {
-        val button = true
-            //            viewModel.fieldList.any{it.livedata.value.isNotBlank()}
-
+        val button = viewModel.fieldList.all{it.livedata.value.isNotBlank()}
 
         val coefficients = viewModel.liveCoefficients.value
         val bundle = Bundle()

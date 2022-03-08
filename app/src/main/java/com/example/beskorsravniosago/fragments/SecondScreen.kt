@@ -1,6 +1,7 @@
 package com.example.beskorsravniosago.fragments
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -32,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.decode.SvgDecoder
@@ -48,7 +50,7 @@ import kotlinx.coroutines.launch
 
 class SecondScreen : Fragment() {
 
-    private val viewModel: FirstScreenViewModel by viewModels()
+    private val viewModel: FirstScreenViewModel by activityViewModels()
 
     private var coefficients: MutableState<List<Factor>?> = mutableStateOf(null)
 
@@ -80,7 +82,7 @@ class SecondScreen : Fragment() {
                                 title = { SecondTitle() },
                                 onClick = {},
                                 text = R.string.calc_button_second,
-                                button = true,
+                                button = viewModel.statusOffers.value == ApiStatus.DONE,
                                 coefficients = it
                             )
                         }
@@ -124,23 +126,21 @@ class SecondScreen : Fragment() {
     @Composable
     fun Offer(
         offer: Offer,
+        onClick: () -> Unit
     ) {
-        val bundle = Bundle()
-        bundle.putParcelable("o", offer)
-
         Card(
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(84.dp)
                 .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
-            elevation = 4.dp,
+            elevation = 4.dp
         ) {
+            val bundle = Bundle()
+            bundle.putParcelable("o", offer)
             Row(
                 Modifier
-                    .clickable {
-                        findNavController().navigate(R.id.action_secondScreen_to_firstScreen, bundle)
-                    }
+                    .clickable { onClick() }
                     .background(MaterialTheme.colors.primaryVariant)
             ) {
                 Box(
@@ -278,10 +278,19 @@ class SecondScreen : Fragment() {
                 .fillMaxWidth()
         ) {
             for (offer in offers){
-                Offer(offer)
+//                val bundle = Bundle()
+//                bundle.putParcelable("o", offer)
+                Offer(offer) {
+                    viewModel.offer(offer)
+                    viewModel.confirm()
+                    findNavController().navigate(
+                        R.id.action_secondScreen_to_firstScreen,
+//                        bundle
+                    )}
+                }
             }
         }
-    }
+
     @Composable
     fun BlankList(){
         Column(

@@ -10,10 +10,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.example.beskorsravniosago.collections.InputFieldData
 import com.example.beskorsravniosago.collections.coefficients
 import com.example.beskorsravniosago.collections.offers
-import com.example.beskorsravniosago.network.Api
-import com.example.beskorsravniosago.network.ApiOffer
-import com.example.beskorsravniosago.network.Factors
-import com.example.beskorsravniosago.network.Offers
+import com.example.beskorsravniosago.network.*
 import retrofit2.await
 
 enum class ApiStatus{LOADING,ERROR,DONE}
@@ -37,30 +34,30 @@ class FirstScreenViewModel : ViewModel() {
     }
 
     private val _inputBase = mutableStateOf("")
-    private var inputBase: MutableState<String> = _inputBase
+     var inputBase: MutableState<String> = _inputBase
 
     private val _inputPower = mutableStateOf("")
-    private var inputPower: MutableState<String> = _inputPower
+     var inputPower: MutableState<String> = _inputPower
 
     private val _inputTerritory = mutableStateOf("")
-    private var inputTerritory: MutableState<String> = _inputTerritory
+     var inputTerritory: MutableState<String> = _inputTerritory
 
     private val _inputAccident = mutableStateOf("")
-    private var inputAccident: MutableState<String> = _inputAccident
+     var inputAccident: MutableState<String> = _inputAccident
 
     private val _inputAge = mutableStateOf("")
-    private var inputAge: MutableState<String> = _inputAge
+     var inputAge: MutableState<String> = _inputAge
 
     private val _inputLimit = mutableStateOf("")
-    private var inputLimit: MutableState<String> = _inputLimit
+     var inputLimit: MutableState<String> = _inputLimit
 
 
-    private var fieldBase = InputFieldData(inputBase,R.string.first_field,R.string.first_field_after,R.string.first_placeholder,KeyboardType.Text)
-    private var fieldPower = InputFieldData(inputPower,R.string.second_field,R.string.second_field,R.string.second_placeholder,KeyboardType.Number)
-    private var fieldTerritory = InputFieldData(inputTerritory,R.string.third_field,R.string.third_field,R.string.third_placeholder,KeyboardType.Number)
-    private var fieldAccident = InputFieldData(inputAccident,R.string.fourth_field,R.string.fourth_field,R.string.fourth_placeholder,KeyboardType.Number)
-    private var fieldAge = InputFieldData(inputAge,R.string.fifth_field,R.string.fifth_field,R.string.fifth_placeholder,KeyboardType.Number)
-    private var fieldLimit = InputFieldData(inputLimit,R.string.sixth_field,R.string.sixth_field,R.string.sixth_placeholder,KeyboardType.Number)
+     var fieldBase = InputFieldData(inputBase,R.string.first_field,R.string.first_field_after,R.string.first_placeholder,KeyboardType.Text)
+     var fieldPower = InputFieldData(inputPower,R.string.second_field,R.string.second_field,R.string.second_placeholder,KeyboardType.Number)
+     var fieldTerritory = InputFieldData(inputTerritory,R.string.third_field,R.string.third_field,R.string.third_placeholder,KeyboardType.Number)
+     var fieldAccident = InputFieldData(inputAccident,R.string.fourth_field,R.string.fourth_field,R.string.fourth_placeholder,KeyboardType.Number)
+     var fieldAge = InputFieldData(inputAge,R.string.fifth_field,R.string.fifth_field,R.string.fifth_placeholder,KeyboardType.Number)
+     var fieldLimit = InputFieldData(inputLimit,R.string.sixth_field,R.string.sixth_field,R.string.sixth_placeholder,KeyboardType.Number)
 
     val fieldList = listOf(fieldBase, fieldPower, fieldTerritory, fieldAccident, fieldAge, fieldLimit)
 
@@ -69,7 +66,15 @@ class FirstScreenViewModel : ViewModel() {
 
     fun setInput(input: String) {
         viewModelScope.launch {
-            fieldList[field.value].livedata.value = input
+            when(field.value){
+                0 -> _inputBase.value = input
+                1 -> _inputPower.value = input
+                2 -> _inputTerritory.value = input
+                3 -> _inputAccident.value = input
+                4 -> _inputAge.value = input
+                5 -> _inputLimit.value = input
+            }
+//            fieldList[field.value].livedata.value = input
         }
     }
 
@@ -167,6 +172,16 @@ class FirstScreenViewModel : ViewModel() {
         initialValue = ModalBottomSheetValue.Hidden,
             isSkipHalfExpanded = true,
     )
+
+    private val _offer: MutableState<Offer?> = mutableStateOf(null)
+    var offer: MutableState<Offer?> = _offer
+
+    fun offer(offer: Offer?) {
+        viewModelScope.launch {
+            _offer.value  = offer
+        }
+    }
+
 
 }
 

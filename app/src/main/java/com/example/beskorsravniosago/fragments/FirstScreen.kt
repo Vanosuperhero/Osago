@@ -2,6 +2,7 @@ package com.example.beskorsravniosago.fragments
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -39,10 +40,13 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.core.view.WindowCompat
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.beskorsravniosago.collections.coefficients
 import com.example.beskorsravniosago.network.Factor
@@ -50,26 +54,29 @@ import com.example.beskorsravniosago.network.Offer
 import com.example.beskorsravniosago.viewmodels.ApiStatus
 import com.example.beskorsravniosago.viewmodels.FirstScreenViewModel
 import com.google.accompanist.insets.*
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.*
 
 
 class FirstScreen : Fragment() {
 
-    private val viewModel: FirstScreenViewModel by viewModels()
-    private var offer: MutableState<Offer?> = mutableStateOf(null)
+    private val viewModel: FirstScreenViewModel by activityViewModels()
 
-    @OptIn(ExperimentalMaterialApi::class)
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        CoroutineScope(Dispatchers.Main).launch {
-            arguments?.getParcelable<Offer>("o")?.let {
-                offer.value = it
-                if (viewModel.success.value) {
-                    viewModel.confirm()
-                }
-            }
-        }
-    }
+//    private var offer: MutableState<Offer?> = mutableStateOf(null)
+
+//    @OptIn(ExperimentalMaterialApi::class)
+//    override fun onCreate(savedInstanceState: Bundle?) {
+//        super.onCreate(savedInstanceState)
+//        CoroutineScope(Dispatchers.Main).launch {
+//            arguments?.getParcelable<Offer>("o")?.let {
+//                offer.value = it
+//                if (viewModel.success.value) {
+//                    viewModel.confirm()
+//                    Log.d("TAG","success ")
+//                }
+//            }
+//        }
+//    }
 
     @OptIn(ExperimentalMaterialApi::class)
     override fun onCreateView(
@@ -101,22 +108,36 @@ class FirstScreen : Fragment() {
         button: Boolean,
         coefficients: List<Factor>
     ) {
+        val systemUiController = rememberSystemUiController()
+        val useDarkIcons = MaterialTheme.colors.isLight
+        SideEffect {
+            systemUiController.setSystemBarsColor(
+                color = Color.Transparent,
+                darkIcons = useDarkIcons
+            )
+        }
         val scope = rememberCoroutineScope()
-        if (viewModel.confirm.value) {
-                    scope.launch {
-                        viewModel.expand()
-                        viewModel.unsuccess()
-                    }
-                }
+
 
         val confirmStateChange = remember {    mutableStateOf(false)    }
-        if (!viewModel.bottomSheetScaffoldState.isVisible && confirmStateChange.value){
-            viewModel.getDataCoefficients()
-            viewModel.unconfirm()
-        }
 
+        if (!viewModel.bottomSheetScaffoldState.isVisible && !viewModel.bottomSheetScaffoldState.isAnimationRunning && confirmStateChange.value && viewModel.confirm.value){
+            viewModel.unconfirm()
+            Log.d("TAG","unconfirm ${viewModel.confirm.value}")
+        }
+        if (!viewModel.bottomSheetScaffoldState.isVisible && !viewModel.bottomSheetScaffoldState.isAnimationRunning && confirmStateChange.value && viewModel.statusCoefficients.value != ApiStatus.DONE && !viewModel.confirm.value){
+            viewModel.getDataCoefficients()
+            Log.d("TAG","get data ${viewModel.confirm.value}")
+        }
         if (viewModel.bottomSheetScaffoldState.isVisible){
             confirmStateChange.value = true
+        }
+        if (viewModel.confirm.value && !viewModel.bottomSheetScaffoldState.isVisible && !viewModel.bottomSheetScaffoldState.isAnimationRunning){
+            Log.d("TAG","if confirmvalue")
+            scope.launch {
+                viewModel.expand()
+                Log.d("TAG","expand")
+            }
         }
 
         val insets = LocalWindowInsets.current
@@ -533,6 +554,11 @@ class FirstScreen : Fragment() {
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 24.dp),
                 )
+//                val focusRequester = remember { FocusRequester() }
+//                LaunchedEffect(Unit) {
+//                    keyboardController?.hide()
+//                    focusRequester.requestFocus()
+//                }
                  OutlinedTextField(
                      keyboardOptions = KeyboardOptions(
                      imeAction = ImeAction.Done,
@@ -542,6 +568,7 @@ class FirstScreen : Fragment() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
+//                        .focusRequester(focusRequester),
                     value = viewModel.fieldList[field].livedata.value,
                     onValueChange = { viewModel.setInput(it) },
                     shape = RoundedCornerShape(12.dp),
@@ -649,7 +676,8 @@ class FirstScreen : Fragment() {
             onBack = {
                 onBack()
                 viewModel.unconfirm()
-                offer.value = null
+                viewModel.offer(null)
+//                offer.value = null
                 findNavController().previousBackStackEntry?.savedStateHandle?.set("key", null)
             }
         )
@@ -682,8 +710,8 @@ class FirstScreen : Fragment() {
                         .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 4.dp)
                 )
                 Box(Modifier.padding(vertical = 10.dp)){
-                    offer.value?.let {
-                        SecondScreen().Offer(it)
+                    viewModel.offer.value?.let {
+                        SecondScreen().Offer(it) {}
                     }
                 }
                 Button(
@@ -691,7 +719,7 @@ class FirstScreen : Fragment() {
                         scope.launch {
                             viewModel.collapse()
                             viewModel.unconfirm()
-                            offer.value = null
+                            viewModel.offer.value = null
                             if (viewModel.statusCoefficients.value == ApiStatus.DONE ) {
                                 findNavController().navigate(R.id.firstScreen) }
                             findNavController()
@@ -725,11 +753,19 @@ class FirstScreen : Fragment() {
     fun HomeScreen() {
         val focusManager = LocalFocusManager.current
         val button = true
-//            viewModel.fieldList.any{it.livedata.value.isNotBlank()}
+            //            viewModel.fieldList.any{it.livedata.value.isNotBlank()}
+
+//            viewModel.inputBase.value.isNotBlank() &&
+//       viewModel.inputPower.value.isNotBlank() &&
+//        viewModel.inputTerritory.value.isNotBlank() &&
+//        viewModel.inputAccident.value.isNotBlank() &&
+//        viewModel.inputAge.value.isNotBlank() &&
+//        viewModel.inputLimit.value.isNotBlank()
+
         val coefficients = viewModel.liveCoefficients.value
         val bundle = Bundle()
         bundle.putParcelable("c", coefficients)
-        focusManager.clearFocus()
+        val bundles = Bundle()
         ModalBottomSheetLayout(
             sheetState = viewModel.bottomSheetScaffoldState,
             sheetContent = {

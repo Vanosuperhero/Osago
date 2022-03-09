@@ -3,6 +3,7 @@ package com.example.beskorsravniosago.network
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.*
@@ -19,8 +20,9 @@ private val retrofit = Retrofit.Builder()
 
 interface SravniApi{
     @POST("mobile/internship/v1/osago/rationDetail")
-    fun pushPost(
-    ):Call<Factors>
+    suspend fun pushPost(
+        @Body post: InputCoefs
+    ):Response<Factors>
 }
 
 object Api{
@@ -31,8 +33,9 @@ object Api{
 
 interface OffersApi{
     @POST("mobile/internship/v1/osago/startCalculation")
-    fun pushPost(
-    ):Call<Offers>
+    suspend fun pushPost(
+        @Body post: Factors
+    ):Response<Offers>
 }
 
 object ApiOffer{

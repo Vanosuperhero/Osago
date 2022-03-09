@@ -89,6 +89,7 @@ class FirstScreen : Fragment() {
         button: Boolean,
         coefficients: List<Factor>
     ) {
+        val keyboardController = LocalSoftwareKeyboardController.current
         val systemUiController = rememberSystemUiController()
         val useDarkIcons = MaterialTheme.colors.isLight
         SideEffect {
@@ -106,6 +107,10 @@ class FirstScreen : Fragment() {
         }
         if (!viewModel.bottomSheetScaffoldState.isVisible && !viewModel.bottomSheetScaffoldState.isAnimationRunning && confirmStateChange.value && viewModel.statusCoefficients.value != ApiStatus.DONE && !viewModel.confirm.value){
             viewModel.getDataCoefficients()
+            keyboardController?.hide()
+        }
+        if (!viewModel.bottomSheetScaffoldState.isVisible && !viewModel.bottomSheetScaffoldState.isAnimationRunning && confirmStateChange.value && !viewModel.confirm.value){
+            keyboardController?.hide()
         }
         if (viewModel.bottomSheetScaffoldState.isVisible){
             confirmStateChange.value = true
@@ -473,7 +478,7 @@ class FirstScreen : Fragment() {
                         .padding(start = 16.dp, end = 16.dp, bottom = 6.dp)
                         .align(alignment = Alignment.Start),
                     text = viewModel.fieldList[field].livedata.value,
-                    fontSize = 16.sp,
+                    fontSize = 15.sp,
                     fontFamily = MyFontsFamily,
                     fontWeight = FontWeight.Normal,
                     color = MaterialTheme.colors.secondary
@@ -497,7 +502,6 @@ class FirstScreen : Fragment() {
                 }
             }
         )
-
         Box(
             Modifier
                 .background(MaterialTheme.colors.primaryVariant)
@@ -746,16 +750,18 @@ class FirstScreen : Fragment() {
             sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
             sheetBackgroundColor = Color.White,
         ) {
-        FinalScreen(
-            viewModel,
-            { InputFieldsCard() },
-            { FirstTitle() },
-            { if (viewModel.statusCoefficients.value == ApiStatus.DONE) {
-                findNavController().navigate(R.id.action_firstScreen_to_secondScreen, bundle) } },
-            R.string.calc_button_first,
-            button,
-            coefficients.factors
-            )
+            if (coefficients != null) {
+                FinalScreen(
+                    viewModel,
+                    { InputFieldsCard() },
+                    { FirstTitle() },
+                    { if (viewModel.statusCoefficients.value == ApiStatus.DONE) {
+                        findNavController().navigate(R.id.action_firstScreen_to_secondScreen, bundle) } },
+                    R.string.calc_button_first,
+                    button,
+                    coefficients.factors
+                )
+            }
         }
     }
 }

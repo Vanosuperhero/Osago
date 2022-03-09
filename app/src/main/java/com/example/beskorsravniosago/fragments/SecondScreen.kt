@@ -75,7 +75,7 @@ class SecondScreen : Fragment() {
                             FirstScreen().FinalScreen(
                                 viewModel,
                                 content = { if (viewModel.statusOffers.value == ApiStatus.DONE) {
-                                    OfferList(viewModel.liveOffers.value.offers)
+                                    viewModel.liveOffers.value?.let { it1 -> OfferList(it1.offers) }
                                 } else { BlankList() }},
                                 title = { SecondTitle() },
                                 onClick = {},

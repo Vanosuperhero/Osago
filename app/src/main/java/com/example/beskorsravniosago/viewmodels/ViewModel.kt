@@ -51,6 +51,7 @@ class FirstScreenViewModel : ViewModel() {
     private val _inputLimit = mutableStateOf("")
     private var inputLimit: MutableState<String> = _inputLimit
 
+    private val inputs = InputCoefs(inputBase.value, inputPower.value, inputTerritory.value, inputAccident.value, inputAge.value, inputLimit.value)
 
     private var fieldBase = InputFieldData(inputBase,R.string.first_field,R.string.first_field_after,R.string.first_placeholder,KeyboardType.Text)
     private var fieldPower = InputFieldData(inputPower,R.string.second_field,R.string.second_field,R.string.second_placeholder,KeyboardType.Number)
@@ -76,17 +77,16 @@ class FirstScreenViewModel : ViewModel() {
         }
     }
 
-    private val _liveCoefficients = mutableStateOf(coefficients)
-    var liveCoefficients: MutableState<Factors> = _liveCoefficients
+    private val _liveCoefficients:MutableState<Factors?> = mutableStateOf(coefficients)
+    var liveCoefficients: MutableState<Factors?> = _liveCoefficients
 
 
     fun getDataCoefficients(){
         viewModelScope.launch {
-            val getDataDeferred = Api.retrofitApi.pushPost()
+            val getDataDeferred = Api.retrofitApi.pushPost(inputs)
                 try {
                     _statusCoefficients.value = ApiStatus.LOADING
-                    val listResult = getDataDeferred.await()
-                    _liveCoefficients.value = listResult
+                    _liveCoefficients.value = getDataDeferred.body()
                     _statusCoefficients.value = ApiStatus.DONE
                 }catch (e:Exception) {
                     _statusCoefficients.value = ApiStatus.ERROR
@@ -94,16 +94,17 @@ class FirstScreenViewModel : ViewModel() {
         }
     }
 
-    private val _liveOffers = mutableStateOf(offers)
-    var liveOffers: MutableState<Offers> = _liveOffers
+    private val _liveOffers: MutableState<Offers?> = mutableStateOf(offers)
+    var liveOffers: MutableState<Offers?> = _liveOffers
 
     fun getDataOffers(){
         viewModelScope.launch {
-            val getDataDeferred = ApiOffer.retrofitApi.pushPost()
+            val getDataDeferred = liveCoefficients.value?.let { ApiOffer.retrofitApi.pushPost(it) }
             try {
                 _statusOffers.value = ApiStatus.LOADING
-                val listResult = getDataDeferred.await()
-                _liveOffers.value = listResult
+                if (getDataDeferred != null) {
+                    _liveOffers.value = getDataDeferred.body()
+                }
                 _statusOffers.value = ApiStatus.DONE
             }catch (e:Exception) {
                 _statusOffers.value = ApiStatus.ERROR

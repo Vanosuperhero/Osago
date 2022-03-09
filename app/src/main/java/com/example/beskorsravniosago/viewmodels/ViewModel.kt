@@ -11,7 +11,6 @@ import com.example.beskorsravniosago.collections.InputFieldData
 import com.example.beskorsravniosago.collections.coefficients
 import com.example.beskorsravniosago.collections.offers
 import com.example.beskorsravniosago.network.*
-import retrofit2.await
 
 enum class ApiStatus{LOADING,ERROR,DONE}
 enum class Inputs{BASE,POWER,TERRITORY,ACCIDENT,AGE,LIMIT}
